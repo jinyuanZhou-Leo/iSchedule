@@ -1,0 +1,61 @@
+{
+    "Name":"BCA25 Schedule",
+    "Term":{
+        "start":[2024,9,2],
+        "end":[2025,1,20],
+        "classDuration":70,
+        "classInfo":[[8,0],[9,15],[10,30],[13,0],[14,15]]
+    },
+    "Courses":{
+        "Calculus 12":{
+            "teacher":"Charles Zhang",
+            "time":[[1,1],[3,1],[5,1]],
+            "room":"A205"
+        },
+        "Physics 12":{
+            "teacher":"Charles Zhang",
+            "time":[[2,1],[4,1]],
+            "room":"A205"
+        },
+        "English Studies 12":{
+            "teacher":"Lucy Liu",
+            "time":[[1,2],[2,2],[3,2],[4,2],[5,2]],
+            "room":"A311"
+        },
+        "Career-Life Connections":{
+            "teacher":"Amy Hughes",
+            "time":[[1,3]],
+            "room":"A306"
+        },
+        "Chemistry 12":{
+            "teacher":"Hayden Raulin",
+            "time":[[2,5],[4,5]],
+            "room":"A214"
+        },
+        "Mandarin 12":{
+            "teacher":"吴圣哲",
+            "time":[[2,3],[4,3]],
+            "room":"A312"
+        },
+        "CIS 12":{
+            "teacher":"Don Park",
+            "time":[[3,3]],
+            "room":"A206"
+        },
+        "AP Statistics 12":{
+            "teacher":"Ryan Gruver",
+            "time":[[1,4],[3,4],[5,4]],
+            "room":"A310"
+        },
+        "Active Living 12":{
+            "teacher":"Antonio Timor",
+            "time":[[1,5],[3,5],[5,5]],
+            "room":"A204"
+        },
+        "Support 12":{
+            "teacher": "Evan Lemay",
+            "time":[[2,4],[4,4],[5,3]],
+            "room":"A308/Library"
+        }
+    }
+}
