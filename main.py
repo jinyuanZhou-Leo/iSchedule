@@ -76,6 +76,7 @@ for c in schedule["Courses"]:
 logger.debug("Schedule is successfully objectified")
 
 # customizations
+#TODO: 修复默认设置为random不起效的bug
 scheduleColor = config["color"]
 while True:
     tmpColor = input(f"Please enter the color of your schedule in HEX format (ENTER for using default setting - {scheduleColor}):")
