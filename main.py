@@ -15,7 +15,7 @@ def isHexColor(str):
         return True
     return False
 
-VERSION = 1.2
+VERSION = 1.3
 
 #initialize
 
