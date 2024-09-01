@@ -1741,3 +1741,5 @@ BCA25 Schedule.ics
 iSchedule.code-workspace
 test.py
 .DS_Store
+webui/index.html
+webui/style.css
