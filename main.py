@@ -10,6 +10,11 @@ from datetime import datetime
 def getRandomHexColor():
     return "#{:06x}".format(random.randint(0, 0xFFFFFF))
 
+def isHexColor(str):
+    if str.startswith("#") and len(str) == 7:
+        return True
+    return False
+
 VERSION = 1.2
 
 #initialize
@@ -76,22 +81,19 @@ for c in schedule["Courses"]:
 logger.debug("Schedule is successfully objectified")
 
 # customizations
-#TODO: 修复默认设置为random不起效的bug
 scheduleColor = config["color"]
 while True:
     tmpColor = input(f"Please enter the color of your schedule in HEX format (ENTER for using default setting - {scheduleColor}):")
-    if tmpColor=="":
-        break
-    elif tmpColor.lower() == "random":
+    if not tmpColor: #不使用默认设置，则覆盖默认设置
+        scheduleColor = tmpColor
+        
+    if scheduleColor.lower() == "random":
         scheduleColor = getRandomHexColor()
         break
+    elif isHexColor(scheduleColor):
+        break
     else:
-        if tmpColor.startswith("#") and len(tmpColor) == 7:
-            scheduleColor = tmpColor
-            break
-        else:
-            logger.error(f"Invalid HEX color format - \"{tmpColor}\", Example: #FF50FF")
-            continue
+        logger.error(f"Invalid HEX color format - \"{scheduleColor}\", Example: #FF50FF")
 
 
 if "Name" not in schedule:
