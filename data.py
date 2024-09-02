@@ -67,8 +67,7 @@ class Course:
         self.decodedTimetable = []
         self.term = 0
 
-    def decode(self):  #!变成私有
-        print(f"timetable: {self.timetable}")
+    def decode(self):  #!Turn to private?
         for i in range(len(self.timetable)):
             if type(self.timetable[i][0]) == str:
                 odd = False
@@ -100,14 +99,11 @@ class Course:
                 for item in tmp:
                     self.decodedTimetable.append(item)
 
-        print(f"decoded:{self.decodedTimetable}")
         for i in range(len(self.decodedTimetable)):
             self.decodedTimetable[i][0] -= 1
             self.decodedTimetable[i][1] -= 1
 
-        # print(f"decoded:{self.decodedTimetable}")
-
-    def decodeBlock(self, item):  # [1,[3,5]]#!变成私有
+    def decodeBlock(self, item):  #!Turn to private?
         if isinstance(item[1], list):
             tmp = []
             for i in range(len(item[1])):
