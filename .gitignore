@@ -1743,3 +1743,6 @@ test.py
 .DS_Store
 webui/index.html
 webui/style.css
+test2.py
+backup/schedule.json
+__pycache__/test2.cpython-312.pyc
