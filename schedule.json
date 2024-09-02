@@ -4,7 +4,8 @@
         "start":[2024,9,2],
         "end":[2025,1,20],
         "classDuration":70,
-        "classInfo":[[8,0],[9,15],[10,30],[13,0],[14,15]]
+        "classStartingTime":[[8,0],[9,15],[10,30],[13,0],[14,15]],
+        "mode":"double"
     },
     "Courses":{
         "Calculus 12":{
