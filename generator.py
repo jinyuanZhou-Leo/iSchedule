@@ -17,7 +17,7 @@ def generateICS(term, courseList, name, color, minutesBefore=0):
             for course in courseList:
                 # print(course)
                 block = course.getBlock(day.weekday())
-                if block < len(term.classInfo) and block >= 0:
+                if block < len(term.classStartingTime) and block >= 0:
                     # print("selected")
                     lesson = ic.Event()
                     lesson.add("summary", course.name)  # 事件名称
@@ -29,14 +29,20 @@ def generateICS(term, courseList, name, color, minutesBefore=0):
                         "dtstart",
                         datetime.combine(
                             day,
-                            time(term.classInfo[block][0], term.classInfo[block][1]),
+                            time(
+                                term.classStartingTime[block][0],
+                                term.classStartingTime[block][1],
+                            ),
                         ),
                     )  # 开始时间
                     lesson.add(
                         "dtend",
                         datetime.combine(
                             day,
-                            time(term.classInfo[block][0], term.classInfo[block][1]),
+                            time(
+                                term.classStartingTime[block][0],
+                                term.classStartingTime[block][1],
+                            ),
                         )
                         + timedelta(minutes=term.classDuration),
                     )  # 结束时间

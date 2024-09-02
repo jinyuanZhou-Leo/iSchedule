@@ -38,13 +38,13 @@ class Term:
     start = datetime.now()
     end = datetime.now()
     classDuration = 0
-    classInfo = []
+    classStartingTime = []
 
-    def __init__(self, start, end, classDuration, classInfo):
+    def __init__(self, start, end, classDuration, classStartingTime):
         self.start = datetime(start[0], start[1], start[2])
         self.end = datetime(end[0], end[1], end[2])
         self.classDuration = int(classDuration)
-        self.classInfo = classInfo
+        self.classStartingTime = classStartingTime
 
     def __str__(self):
-        return f"Start:{self.start}\nEnd:{self.end}\nClassDuration:{self.classDuration}mins\nClassInfo:{self.classInfo}"
+        return f"Start:{self.start}\nEnd:{self.end}\nClassDuration:{self.classDuration}mins\nclassStartingTime:{self.classStartingTime}"

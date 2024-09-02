@@ -73,7 +73,7 @@ else:
 
 # schedule parser
 
-term = Term(schedule["Term"]["start"],schedule["Term"]["end"], schedule["Term"]["classDuration"], schedule["Term"]["classInfo"])
+term = Term(schedule["Term"]["start"],schedule["Term"]["end"], schedule["Term"]["classDuration"], schedule["Term"]["classStartingTime"])
 courses = []
 for c in schedule["Courses"]:
     courses.append(Course(c,schedule["Courses"][c]["teacher"],schedule["Courses"][c]["time"],schedule["Courses"][c]["room"]))
