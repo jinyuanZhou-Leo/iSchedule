@@ -73,18 +73,19 @@ else:
 
 # schedule parser
 
-term = Term(schedule["Term"]["start"],schedule["Term"]["end"], schedule["Term"]["classDuration"], schedule["Term"]["classStartingTime"])
+term = Term(schedule["Term"]["start"],schedule["Term"]["end"], schedule["Term"]["classDuration"], schedule["Term"]["classStartingTime"],schedule["Term"]["cycle"])
+
 courses = []
 for c in schedule["Courses"]:
-    courses.append(Course(c,schedule["Courses"][c]["teacher"],schedule["Courses"][c]["time"],schedule["Courses"][c]["room"]))
+    term.addCourse(Course(c,schedule["Courses"][c]["teacher"],schedule["Courses"][c]["time"],schedule["Courses"][c]["room"]))   
     
 logger.debug("Schedule is successfully objectified")
 
 # customizations
 scheduleColor = config["color"]
 while True:
-    tmpColor = input(f"Please enter the color of your schedule in HEX format (ENTER for using default setting - {scheduleColor}):")
-    if not tmpColor: #不使用默认设置，则覆盖默认设置
+    tmpColor = input(f"Please enter the color of your schedule in HEX format (ENTER for using default setting - {scheduleColor}):").strip()
+    if tmpColor!="": #不使用默认设置，则覆盖默认设置
         scheduleColor = tmpColor
         
     if scheduleColor.lower() == "random":
