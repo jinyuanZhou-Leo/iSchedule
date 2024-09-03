@@ -3,13 +3,12 @@
 ### 模块功能说明
 - **data.py:** 类
 - **main.py:** 主程序
-- **generator:** ics文件生成逻辑
 - **config.json:** 配置文件（设置）
 - **schedule.json:** 课表样例
 
 ### 使用说明
 1. **完成配置文件**
-
+  **完整的配置文件格式详见schedule.json和config.json**
    * ```defaultFileName```: 默认读取的课程表json文件路径
 
    * ```color```: ("random":表示随机 | Hex色值)生成的ics文件在日历中的颜色
