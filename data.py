@@ -1,4 +1,15 @@
+import logging
 from datetime import datetime
+
+
+# initialize logging
+logger = logging.getLogger(__name__)
+logger.setLevel(level=logging.INFO)
+formatter = logging.Formatter("%(levelname)s - %(message)s")
+stream_handler = logging.StreamHandler()  # for logging in CLI
+stream_handler.setLevel(level=logging.INFO)  # log level
+stream_handler.setFormatter(formatter)
+logger.addHandler(stream_handler)
 
 
 def roundUpToNearestXMultiples(n: int, x: int):
@@ -9,45 +20,41 @@ def roundUpToNearestXMultiples(n: int, x: int):
 
 
 class Term:
+    name = ""
     start = datetime.now()
     end = datetime.now()
     classDuration = 0
     classStartingTime = []
-    cycle = 0
+    cycle = -1
     courses = []
 
-    def __init__(self, start, end, classDuration: int, classStartingTime, cycle=1):
+    def __init__(
+        self, name: str, start, end, classDuration: int, classStartingTime, cycle: int
+    ):
+        self.name = name
         self.start = datetime(start[0], start[1], start[2])
         self.end = datetime(end[0], end[1], end[2])
         self.classDuration = int(classDuration)
         self.classStartingTime = classStartingTime
-        self.cycle = 5 * cycle  # TODO:判断是否报错
+
+        if type(cycle) != int or cycle <= 0:
+            logger.critical(
+                f'Invalid cycle number for "{self.name}", please explicitly give a cycle number in schedule json file'
+            )
+            exit(0)
+        else:
+            self.cycle = 5 * cycle
+
         #!!! 不在构造器方法内初始化的类参数会被该类所有实例共享
         self.courses = []
 
     def __str__(self):
-        return f"Start:{self.start}\nEnd:{self.end}\nClassDuration:{self.classDuration}mins\nclassStartingTime:{self.classStartingTime}"
+        return f"{self.name}:\n   Start:{self.start}\n   End:{self.end}\n   ClassDuration:{self.classDuration}mins\n   classStartingTime:{self.classStartingTime}"
 
     def addCourse(self, course):
         self.courses.append(course)
         course.attachTo(self)  # mutally bonding 双向绑定
         course.decode()
-
-    def calculateCycle(self):
-        maxDayNumber = 0
-        for course in self.courses:
-            tmp = 0
-            for i in range(len(course.time)):
-                if course.time[i][0] > tmp:
-                    tmp = course.time[i][0]
-            if tmp > maxDayNumber:
-                maxDayNumber = tmp
-
-        self.cycle = roundUpToNearestXMultiples(maxDayNumber, 5)
-        return True
-
-    def getCycle(self):
-        return self.cycle
 
 
 class Course:
@@ -103,6 +110,8 @@ class Course:
             self.decodedTimetable[i][0] -= 1
             self.decodedTimetable[i][1] -= 1
 
+        # print(f"name:{self.name} - decoded:{self.decodedTimetable}")
+
     def decodeBlock(self, item):  #!Turn to private?
         if isinstance(item[1], list):
             tmp = []
@@ -121,10 +130,15 @@ class Course:
         return False
 
     def getBlock(self, day: int):
+        blockList = []
         for i in range(len(self.decodedTimetable)):
             if self.decodedTimetable[i][0] == day:
-                return self.decodedTimetable[i][1]
-        return -1  # if there is no class on that day
+                blockList.append(self.decodedTimetable[i][1])
+
+        if blockList:
+            return blockList
+        else:
+            return False  # if there is no class on that day
 
     def attachTo(self, term: Term):
         if term.__class__.__name__ == "Term":
