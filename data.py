@@ -87,7 +87,13 @@ class Course:
                 elif self.timetable[i][0].lower() == "even":
                     even = True
                 else:
-                    pass  # TODO:报错
+                    logger.error(
+                        f"Invalid course timestamp in schedule file. Please check its format"
+                    )
+                    logger.error(
+                        "Hint: The first parameter of single timestamp can only be 'odd', 'even' or 'everyday'."
+                    )
+                    pass
 
                 for j in range(1, self.term.cycle + 1):  # 解码 everyday, odd, even
                     if j % 2 != 0:  # odd
@@ -121,7 +127,10 @@ class Course:
         elif isinstance(item[1], int):
             return [item]  # if item is a day number
         else:
-            return False  # TODO:报错
+            logger.error(
+                f"Invalid course timestamp in schedule file. Please check its format"
+            )
+            return False
 
     def isOn(self, day: int):
         for i in range(len(self.decodedTimetable)):
@@ -147,7 +156,9 @@ class Course:
                 True  # if the course is successfully attached to the term, return True
             )
         else:
-            # TODO:报错:参数必须为Term类型
+            logger.error(
+                "Invalid parameter: only Term instances can be attached to Course"
+            )
             return False
 
     def __str__(self):

@@ -30,10 +30,9 @@ def generateICS(term:Term, baseName:str, configDict):
     
     cnt = 0 # day counter
     for day in dateRange(term.start, term.end):
-        if day.weekday()<5:#TODO: test on cnt
+        if day.weekday()<5:
             if cnt>=term.cycle:
-                cnt = 0
-            #print(f"day:{day.weekday()}, cnt:{cnt}, cycle:{term.cycle}")  
+                cnt = 0  
             for course in term.courses:
                 #TODO:把以下部分封装到Class Course
                 blocksList = course.getBlock(cnt)
