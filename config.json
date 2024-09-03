@@ -3,6 +3,6 @@
     "color":"#80e22e",
     "alarm":{
         "enabled":true,
-        "minutesBefore":"7"
+        "minutesBefore":7
     }
 }
