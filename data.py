@@ -1,3 +1,4 @@
+import itertools
 import logging
 from datetime import datetime
 
@@ -74,69 +75,55 @@ class Course:
         self.decodedTimetable = []
         self.term = 0
 
-    def decode(self):  #!Turn to private?
-        for i in range(len(self.timetable)):
-            if type(self.timetable[i][0]) == str:
-                odd = False
-                even = False
-                if self.timetable[i][0].lower() == "everyday":
-                    odd = True
-                    even = True
-                elif self.timetable[i][0].lower() == "odd":
-                    odd = True
-                elif self.timetable[i][0].lower() == "even":
-                    even = True
-                else:
-                    logger.error(
-                        f"Invalid course timestamp in schedule file. Please check its format"
-                    )
-                    logger.error(
-                        "Hint: The first parameter of single timestamp can only be 'odd', 'even' or 'everyday'."
-                    )
-                    pass
+    def decode(self):
+        print(f"timetable:{self.timetable}")
 
-                for j in range(1, self.term.cycle + 1):  # 解码 everyday, odd, even
-                    if j % 2 != 0:  # odd
-                        if odd:
-                            tmp = self.decodeBlock([j, self.timetable[i][1]])
-                            for item in tmp:
-                                self.decodedTimetable.append(item)
-                    else:  # even
-                        if even:
-                            tmp = self.decodeBlock([j, self.timetable[i][1]])
-                            for item in tmp:
-                                self.decodedTimetable.append(item)
+        def decodeComponent(component, maximum):
+            abbrDict = {
+                "odd": [i for i in range(1, maximum + 1, 2)],
+                "even": [i for i in range(2, maximum + 1, 2)],
+                "everyday": [i for i in range(1, maximum + 1)],
+            }
+            if isinstance(component, int):
+                return [component]
+            elif isinstance(component, str):
+                return abbrDict[component.lower()]
 
+            elif isinstance(component, list):  # [10,"odd"]
+                tmp = []
+                for item in component:
+                    if isinstance(item, int):
+                        tmp.append(item)
+                    elif isinstance(item, str):
+                        tmp.extend(abbrDict[item.lower()])
+                    else:
+                        logger.critical(
+                            f"Invalid schedule file, Error processing {self.term}.{self.name}.time, {item} can not be indentified"
+                        )
+                        exit(0)
+                return tmp
             else:
-                tmp = self.decodeBlock(self.timetable[i])
-                for item in tmp:
-                    self.decodedTimetable.append(item)
+                logger.critical(
+                    f"Invalid schedule file, Error processing {self.term}.{self.name}.time, {component} can not be indentified"
+                )
+                exit(0)
+
+        for timestamp in self.timetable:  # [1,2], ["odd",3]
+            # 求decodeTimestamp笛卡尔积
+            self.decodedTimetable.extend(
+                [
+                    list(t)
+                    for t in itertools.product(
+                        decodeComponent(timestamp[0], self.term.cycle),
+                        decodeComponent(timestamp[1], len(self.term.classStartingTime)),
+                    )
+                ]
+            )
 
         for i in range(len(self.decodedTimetable)):
             self.decodedTimetable[i][0] -= 1
             self.decodedTimetable[i][1] -= 1
-
-        # print(f"name:{self.name} - decoded:{self.decodedTimetable}")
-
-    def decodeBlock(self, item):  #!Turn to private?
-        if isinstance(item[1], list):
-            tmp = []
-            for i in range(len(item[1])):
-                tmp.append([item[0], item[1][i]])
-            return tmp
-        elif isinstance(item[1], int):
-            return [item]  # if item is a day number
-        else:
-            logger.error(
-                f"Invalid course timestamp in schedule file. Please check its format"
-            )
-            return False
-
-    def isOn(self, day: int):
-        for i in range(len(self.decodedTimetable)):
-            if self.decodedTimetable[i][0] == day:
-                return True
-        return False
+        print(f"decoded:{self.decodedTimetable}")
 
     def getBlock(self, day: int):
         blockList = []
