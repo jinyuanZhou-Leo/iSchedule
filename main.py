@@ -62,7 +62,7 @@ def generateICS(term:Term, baseName:str, configDict):
         file.write(icsFile.to_ical())
         return True
 
-VERSION = 1.4
+VERSION = 1.5
 
 #initialize
 
