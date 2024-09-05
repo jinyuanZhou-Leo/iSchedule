@@ -35,7 +35,7 @@ def generateICS(term:Term, baseName:str, configDict):
                 cnt = 0  
             for course in term.courses:
                 #TODO:把以下部分封装到Class Course
-                blocksList = course.getBlock(cnt)
+                blocksList = course.get_block(cnt)
                 if blocksList:
                     for block in blocksList:
                         event = ic.Event()
@@ -62,7 +62,7 @@ def generateICS(term:Term, baseName:str, configDict):
         file.write(icsFile.to_ical())
         return True
 
-VERSION = 1.5
+VERSION = 1.6
 
 #initialize
 

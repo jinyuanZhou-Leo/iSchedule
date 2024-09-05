@@ -54,8 +54,9 @@ class Term:
 
     def addCourse(self, course):
         self.courses.append(course)
-        course.attachTo(self)  # mutally bonding 双向绑定
+        course.attach_to(self)  # mutally bonding 双向绑定
         course.decode()
+        return True
 
 
 class Course:
@@ -78,7 +79,7 @@ class Course:
     def decode(self):
         print(f"timetable:{self.timetable}")
 
-        def decodeComponent(component, maximum):
+        def decode_component(component, maximum):
             abbrDict = {
                 "odd": [i for i in range(1, maximum + 1, 2)],
                 "even": [i for i in range(2, maximum + 1, 2)],
@@ -114,18 +115,23 @@ class Course:
                 [
                     list(t)
                     for t in itertools.product(
-                        decodeComponent(timestamp[0], self.term.cycle),
-                        decodeComponent(timestamp[1], len(self.term.classStartingTime)),
+                        [
+                            x - 1
+                            for x in decode_component(timestamp[0], self.term.cycle)
+                        ],
+                        [
+                            x - 1
+                            for x in decode_component(
+                                timestamp[1], len(self.term.classStartingTime)
+                            )
+                        ],
                     )
                 ]
             )
 
-        for i in range(len(self.decodedTimetable)):
-            self.decodedTimetable[i][0] -= 1
-            self.decodedTimetable[i][1] -= 1
         print(f"decoded:{self.decodedTimetable}")
 
-    def getBlock(self, day: int):
+    def get_block(self, day: int):
         blockList = []
         for i in range(len(self.decodedTimetable)):
             if self.decodedTimetable[i][0] == day:
@@ -136,7 +142,7 @@ class Course:
         else:
             return False  # if there is no class on that day
 
-    def attachTo(self, term: Term):
+    def attach_to(self, term: Term):
         if term.__class__.__name__ == "Term":
             self.term = term
             return (
