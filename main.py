@@ -4,7 +4,7 @@ import random
 from pathlib import Path
 from data import Course, Term
 #from generator import generateICS
-from datetime import date, time, datetime, timedelta
+from datetime import datetime, timedelta
 import icalendar as ic
 
 def dateRange(start, end):
@@ -29,22 +29,16 @@ def generateICS(term:Term, baseName:str, configDict):
     icsFile.add("X-WR-TIMEZONE", "Asia/Shanghai")
     
     cnt = 0 # day counter
-    for day in dateRange(term.start, term.end):
-        if day.weekday()<5:
+    for date in dateRange(term.start, term.end):
+        if date.weekday()<5:
             if cnt>=term.cycle:
                 cnt = 0  
             for course in term.courses:
                 #TODO:把以下部分封装到Class Course
-                blocksList = course.get_block(cnt)
+                blocksList = course.get_block_on(cnt)
                 if blocksList:
                     for block in blocksList:
-                        event = ic.Event()
-                        event.add("summary", course.name)     
-                        event.add("description", f"{course.teacher}\n{course.room}")
-                        event.add("dtstart",datetime.combine(day,time(term.classStartingTime[block][0],
-                            term.classStartingTime[block][1])))
-                        event.add("dtend",datetime.combine(day,time(term.classStartingTime[block][0],
-                            term.classStartingTime[block][1]))+timedelta(minutes=term.classDuration))
+                        event = course.eventify(date, block)
                             
                         if configDict["alarm"]["enabled"] == True:
                             reminder = ic.Alarm()

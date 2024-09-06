@@ -1,6 +1,7 @@
 import itertools
 import logging
-from datetime import datetime
+import icalendar as ic
+from datetime import datetime, time, timedelta
 
 
 # initialize logging
@@ -131,7 +132,7 @@ class Course:
 
         print(f"decoded:{self.decodedTimetable}")
 
-    def get_block(self, day: int):
+    def get_block_on(self, day: int) -> list:
         blockList = []
         for i in range(len(self.decodedTimetable)):
             if self.decodedTimetable[i][0] == day:
@@ -153,6 +154,34 @@ class Course:
                 "Invalid parameter: only Term instances can be attached to Course"
             )
             return False
+
+    def eventify(self, date, block) -> ic.Event:
+        event = ic.Event()
+        event.add("summary", self.name)
+        event.add("description", f"{self.teacher}\n{self.room}")
+        event.add(
+            "dtstart",
+            datetime.combine(
+                date,
+                time(
+                    self.term.classStartingTime[block][0],
+                    self.term.classStartingTime[block][1],
+                ),
+            ),
+        )
+        event.add(
+            "dtend",
+            datetime.combine(
+                date,
+                time(
+                    self.term.classStartingTime[block][0],
+                    self.term.classStartingTime[block][1],
+                ),
+            )
+            + timedelta(minutes=self.term.classDuration),
+        )
+
+        return event
 
     def __str__(self):
         return f"{self.name}\n   Teacher: {self.teacher}\n   Time: {self.timetable}\n   Room: {self.room}"
