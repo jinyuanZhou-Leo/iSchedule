@@ -34,7 +34,6 @@ def generateICS(term:Term, baseName:str, configDict):
             if cnt>=term.cycle:
                 cnt = 0  
             for course in term.courses:
-                #TODO:把以下部分封装到Class Course
                 blocksList = course.get_block_on(cnt)
                 if blocksList:
                     for block in blocksList:
@@ -56,7 +55,7 @@ def generateICS(term:Term, baseName:str, configDict):
         file.write(icsFile.to_ical())
         return True
 
-VERSION = 1.6
+VERSION = "1.6"
 
 #initialize
 
