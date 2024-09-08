@@ -3,7 +3,6 @@ import logging
 import random
 from pathlib import Path
 from data import Course, Term
-#from generator import generateICS
 from datetime import datetime, timedelta
 import icalendar as ic
 
