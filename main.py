@@ -30,7 +30,7 @@ def generateICS(term:Term, baseName:str, configDict):
     cnt = 0 # day counter
     for date in dateRange(term.start, term.end):
         if date.weekday()<5:
-            if cnt>=term.cycle:
+            if cnt>=term.cycleWeek:
                 cnt = 0  
             for course in term.courses:
                 blocksList = course.get_block_on(cnt)
@@ -117,7 +117,7 @@ else:
 termsDict = dict(filter(lambda x: x[0] != 'Name', scheduleDict.items())) # filter out "Name" key
 termsObjList = []
 for t in termsDict:
-    termTmp = Term(t,scheduleDict[t]["start"],scheduleDict[t]["end"], scheduleDict[t]["classDuration"], scheduleDict[t]["classStartingTime"],scheduleDict[t]["cycle"])
+    termTmp = Term(t,scheduleDict[t]["start"],scheduleDict[t]["end"], scheduleDict[t]["classDuration"], scheduleDict[t]["classStartingTime"],scheduleDict[t]["cycleWeek"])
     termsObjList.append(termTmp)
     #coursesObj = []
     for c in scheduleDict[t]["courses"]:

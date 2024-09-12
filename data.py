@@ -27,11 +27,17 @@ class Term:
     end = datetime.now()
     classDuration = 0
     classStartingTime = []
-    cycle = -1
+    cycleWeek = -1
     courses = []
 
     def __init__(
-        self, name: str, start, end, classDuration: int, classStartingTime, cycle: int
+        self,
+        name: str,
+        start,
+        end,
+        classDuration: int,
+        classStartingTime,
+        cycleWeek: int,
     ):
         self.name = name
         self.start = datetime(start[0], start[1], start[2])
@@ -39,13 +45,13 @@ class Term:
         self.classDuration = int(classDuration)
         self.classStartingTime = classStartingTime
 
-        if type(cycle) != int or cycle <= 0:
+        if type(cycleWeek) != int or cycleWeek <= 0:
             logger.critical(
                 f'Invalid cycle number for "{self.name}", please explicitly give a cycle number in schedule json file'
             )
             exit(0)
         else:
-            self.cycle = 5 * cycle
+            self.cycleWeek = 5 * cycleWeek
 
         #!!! 不在构造器方法内初始化的类参数会被该类所有实例共享
         self.courses = []
@@ -78,7 +84,7 @@ class Course:
         self.term = 0
 
     def decode(self):
-        print(f"timetable:{self.timetable}")
+        # print(f"timetable:{self.timetable}")
 
         def decode_component(component, maximum):
             abbrDict = {
@@ -118,7 +124,7 @@ class Course:
                     for t in itertools.product(
                         [
                             x - 1
-                            for x in decode_component(timestamp[0], self.term.cycle)
+                            for x in decode_component(timestamp[0], self.term.cycleWeek)
                         ],
                         [
                             x - 1
@@ -130,7 +136,7 @@ class Course:
                 ]
             )
 
-        print(f"decoded:{self.decodedTimetable}")
+        # print(f"decoded:{self.decodedTimetable}")
 
     def get_block_on(self, day: int) -> list:
         blockList = []
