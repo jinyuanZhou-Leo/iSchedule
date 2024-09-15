@@ -3,6 +3,8 @@
 ## 模块功能说明
 - **data.py:** 类
 - **main.py:** 主程序
+- **json_generator.py:** json格式课程表生成器
+- **rule.md** Schedule.json格式Prompt
 - **config.json:** 配置文件（设置）
 - **schedule.json:** 课表样例
 
@@ -60,13 +62,13 @@
   - **含义**: 表示该学期内的所有课程及其详细信息。
   - **示例**: `{ "Calculus 12": { "teacher": "Charles Zhang", "time": [["even",1]], "room": "A205" }, ... }`
 
-#### courses 中的子字段（每个课程）
+### courses 中的子字段（每个课程）
 - **Calculus 12, Physics 12, English Studies 12, ...** (课程名称)
   - **类型**: `object`
   - **含义**: 表示具体课程的详细信息。
   - **示例**: `{ "teacher": "Charles Zhang", "time": [["even",1]], "room": "A205" }`
 
-##### 每个课程中的子字段
+### 每个课程中的子字段
 - **teacher**
   - **类型**: `string`
   - **含义**: 表示授课教师的名字。
