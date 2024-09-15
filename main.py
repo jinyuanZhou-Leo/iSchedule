@@ -1,6 +1,7 @@
 import json
 import logging
 import random
+from tqdm import tqdm
 from pathlib import Path
 from data import Course, Term
 from datetime import datetime, timedelta
@@ -18,7 +19,7 @@ def isHexColor(str):
         return True
     return False
 
-def generateICS(term:Term, baseName:str, configDict):
+def generateICS(term:Term, baseName:str, configDict) -> bool:
     icsFile = ic.Calendar()
     icsFile.add("VERSION", "2.0")
     icsFile.add("PRODID", "iScheduler")
@@ -28,7 +29,7 @@ def generateICS(term:Term, baseName:str, configDict):
     icsFile.add("X-WR-TIMEZONE", "Asia/Shanghai")
     
     cnt = 0 # day counter
-    for date in dateRange(term.start, term.end):
+    for date in tqdm(dateRange(term.start, term.end),desc="Generating: ",total=int((term.end - term.start).days) + 1):
         if date.weekday()<5:
             if cnt>=term.cycleWeek:
                 cnt = 0  
@@ -50,9 +51,13 @@ def generateICS(term:Term, baseName:str, configDict):
             
 
     fileName = f"{baseName} - {term.name}.ics"
-    with open(fileName, "wb") as file:
-        file.write(icsFile.to_ical())
-        return True
+    try:
+        with open(fileName, "wb") as file:
+            file.write(icsFile.to_ical())
+            return True
+    except Exception as e:
+        logger.error("Error occurred while writing ics file: "+str(e))
+        return False
 
 VERSION = "1.6"
 
@@ -69,7 +74,6 @@ stream_handler.setFormatter(formatter)
 logger.addHandler(stream_handler)
 
 logger.info("iScheduler "+str(VERSION))
-logger.info("Current Path: "+ str(Path.cwd()))
 
 #initialize colorama
 #init(autoreset=True)
@@ -132,7 +136,7 @@ logger.debug("Schedule is successfully objectified")
 # customizations
 #scheduleColor = config["color"]
 while True:
-    colorInput = input(f"Please enter the color of your schedule in HEX format (ENTER for using default setting - {configDict["color"]}):").strip() # strip() help cut beginning and trailing whitespace
+    colorInput = input(f"\nHEX color for ICS file (ENTER for defult - {configDict["color"]}):").strip() # strip() help cut beginning and trailing whitespace
     if colorInput!="": #不使用默认设置，则覆盖默认设置
         configDict["color"] = colorInput
         
@@ -160,11 +164,13 @@ if configDict["alarm"]["enabled"] != True:
 
 
 # generate .ics file for each term
-for i in range(len(termsObjList)):
+for i in tqdm(range(len(termsObjList)),desc="Term: "):
     termObj = termsObjList[i]
     status_generateICS = generateICS(termObj,baseName,configDict)
     if status_generateICS:
-        logger.info(f"[{i+1} of {len(termsObjList)}] Successfully generated ICS file - {baseName} - {termObj.name}.ics")
+        logger.info(f"[{i+1} of {len(termsObjList)}] Successfully generated ICS file - {baseName} - {termObj.name}.ics\n")
+
+print("\n")
 
 logger.info("To import the ICS file, drag the generated ICS file into your calendar app")
 
