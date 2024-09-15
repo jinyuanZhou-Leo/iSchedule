@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 import json
 import os
+import re
 
 
 ruleFile = ""
@@ -45,10 +46,20 @@ def generateResponse(userPrompt, model):
     )
     return response
 
+def extract_json_from_markdown(markdown_text):
+    # 编译正则表达式，用于匹配Markdown中的JSON代码块
+    pattern = re.compile(r'```json\n(.*?)```', re.DOTALL)
+    
+    # 使用正则表达式的findall方法查找所有匹配的JSON代码块
+    matches = pattern.findall(markdown_text)
+    
+    # 将所有匹配到的JSON代码块内容连接成一个字符串，并返回
+    return ''.join(matches)
 
 modelType = "glm-4-flash"
 apiKey = os.getenv("ZHIPU_API_KEY")
 if not apiKey:
+    print("错误:未找到\".env\"配置文件")
     apiKey = input("请输入智谱AI API_KEY以使用在线API推理: ").strip()
 else:
     print(f"成功读取ZHIPU_API_KEY: {apiKey[:10]}...{apiKey[40:]}") #部分显示,保护隐私
@@ -69,9 +80,7 @@ while True:
         break
     print(f"{modelType}: {generateResponse(userPrompt.replace("\n", " ").replace("\r", " "), modelType)}")
 
-
-
-finalJson = generateResponse("请直接返回json文件内容,不要输出其他任何字符", modelType)
+finalJson = extract_json_from_markdown(generateResponse("请直接返回json文件内容,不要输出其他任何字符", modelType))
 print(f"\n\n最终生成的Schedule.json:\n{finalJson}")
 
 configDict = {}
