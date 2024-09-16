@@ -2,7 +2,7 @@
     "Name":"BCA25 Schedule",
     "Term 1":{
         "start":[2024,9,2],
-        "end":[2024,11,17],
+        "end":[2025,1,17],
         "classDuration":70,
         "classStartingTime":[[8,0],[9,15],[10,30],[13,0],[14,15]],
         "cycleWeek":2,
