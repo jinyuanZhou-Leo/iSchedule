@@ -1,8 +1,8 @@
 import json
 import logging
 import random
+import os
 from tqdm import tqdm,trange
-from tqdm.contrib.logging import logging_redirect_tqdm
 from pathlib import Path
 from data import Course, Term
 from datetime import datetime, timedelta
@@ -21,6 +21,10 @@ def isHexColor(str):
     return False
 
 def generateICS(term:Term, baseName:str, configDict) -> bool:
+    """
+    Generates an ICS file from given information.
+    Return a boolean indicating whether the file is successfully generated.
+    """
     icsFile = ic.Calendar()
     icsFile.add("VERSION", "2.0")
     icsFile.add("PRODID", "iScheduler")
@@ -61,21 +65,24 @@ def generateICS(term:Term, baseName:str, configDict) -> bool:
         logger.error(f"Unknown error occurred while parsing \'{f}\': {e}")
         return False  
 
-def loadJsonFile(path):
+def loadJsonFile(path:Path):
+    """Json.load() with proper error handling"""
     try:
         with path.open() as f:
-            data = json.load(f)
-            logger.debug(f"{path} is successfully parsed")
-            return data
+            try:
+                data = json.load(f)
+                logger.info(f"{f.name} is successfully parsed")
+                return data
+            except json.JSONDecodeError:
+                logger.error(f"Invalid JSON format in {path}")
+            exit(0)
     except FileNotFoundError as e:
-        logger.error(f"{e}: \"{path}\" cannot be found")
-    except json.JSONDecodeError:
-        logger.error(f"Invalid JSON format in {path}")
+        logger.error(e)
     except IOError as e:
-        logger.error(f"{e}: Permission denied, Try re-run the program by using 'sudo'.")
+        logger.error(f"{e}\nPermission denied, Try re-run the program by using 'sudo'.")
     except Exception as e:
-        logger.error(f"Unknown error occurred while parsing '{path}': {e}")
-    return None
+        logger.error(f"Unknown error occurred while parsing '{path}'\n{e}")
+    exit(0)
 
 VERSION = "1.6"
 
@@ -94,54 +101,18 @@ logger.addHandler(stream_handler)
 logger.info("iScheduler "+str(VERSION))
 
 
-# parsing config
-currentPath = str(Path.cwd())
-configPath = Path(currentPath+"/config.json")
 
-configDict = {}
-try:
-    with configPath.open() as f:
-        try:
-            configDict = json.load(f)
-        except json.JSONDecodeError:
-            logger.error(f"Invalid JSON format in {f}")
-            exit(0)
-        else: logger.debug("Config.json is successfully parsed")
-except FileNotFoundError as e:
-    logger.error(f"{e}: \"{configPath}\" cannot be found")
-    exit(0)
-except IOError as e:
-    logger.error(f"{e}: Permission denied, Try re-run the program by using \'sudo\'.")
-    exit(0)
-except Exception as e:
-    logger.error(f"Unknown error occurred while parsing \'{f}\': {e}")
-    exit(0)   
+configDict = loadJsonFile(Path.cwd() / "config.json")
 
-
-scheduleDict = {}
-schedulePath = Path(currentPath+"/"+configDict["defaultFileName"]) if Path(currentPath+"/"+configDict["defaultFileName"]).is_file() else False
-if not schedulePath:
+schedulePath = Path.cwd() / configDict["defaultFileName"]
+if not os.path.exists(schedulePath):
     schedulePathInput = input("Please enter the schedule file path: ").strip()
     if (schedulePathInput.startswith("\'") and schedulePathInput.endswith("\'")) or (schedulePathInput.startswith("\"") and schedulePathInput.endswith("\"")):
             schedulePathInput = schedulePathInput[1:-1] #去掉引号
     schedulePath = Path(schedulePathInput)
-try:
-    with schedulePath.open() as f:
-        try:
-            scheduleDict = json.load(f)
-        except json.JSONDecodeError:
-            logger.error(f"Invalid JSON format in {f}")
-            exit(0)
-        else:logger.info("Schedule is successfully parsed")
-except FileNotFoundError as e:
-    logger.error(f"{e}: \"{schedulePath}\" cannot be found")
-    exit(0)
-except IOError as e:
-    logger.error(f"{e}: Permission denied, Try re-run the program by using \'sudo\'.")
-    exit(0)
-except Exception as e:
-    logger.error(f"Unknown error occurred while parsing \'{f}\': {e}")
-    exit(0)
+    
+scheduleDict = loadJsonFile(schedulePath)
+
 
 
 # schedule parser
@@ -160,6 +131,8 @@ while True:
     colorInput = input(f"\nHEX color for ICS file (ENTER for defult - {configDict["color"]}):").strip() 
     if colorInput!="": #不使用默认设置，则覆盖默认设置
         configDict["color"] = colorInput
+    else:
+        logger.info("Using default setting")
         
     if configDict["color"].lower() == "random":
         configDict["color"] = getRandomHexColor()
@@ -188,9 +161,9 @@ if configDict["alarm"]["enabled"] != True:
 for i in trange(len(termsObjList),desc="Total: "):
     termObj = termsObjList[i]
     if generateICS(termObj,baseName,configDict):
-        logger.info(f"[{i+1} of {len(termsObjList)}] Successfully generated ICS file - {baseName} - {termObj.name}.ics")
+        tqdm.write(f"[{i+1} of {len(termsObjList)}] Successfully generated ICS file - {baseName} - {termObj.name}.ics")
     else:
-        logger.error(f"[{i+1} of {len(termsObjList)}] Failed to generate ICS file - {baseName} - {termObj.name}.ics")
+        tqdm.write(f"[{i+1} of {len(termsObjList)}] Failed to generate ICS file - {baseName} - {termObj.name}.ics")
 
 print("\n")
 

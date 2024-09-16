@@ -2,6 +2,7 @@ import itertools
 import logging
 import icalendar as ic
 from datetime import datetime, time, timedelta
+from functools import lru_cache
 
 
 # initialize logging
@@ -138,6 +139,7 @@ class Course:
 
         # print(f"decoded:{self.decodedTimetable}")
 
+    @lru_cache(maxsize=128)
     def get_block_on(self, day: int) -> list:
         blockList = []
         for i in range(len(self.decodedTimetable)):
