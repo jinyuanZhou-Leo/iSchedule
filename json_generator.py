@@ -1,6 +1,7 @@
 from zhipuai import ZhipuAI
 from pathlib import Path
 from dotenv import load_dotenv
+from pathlib import Path
 load_dotenv()
 import json
 import os
@@ -61,6 +62,16 @@ apiKey = os.getenv("ZHIPU_API_KEY")
 if not apiKey:
     print("错误:未找到\".env\"配置文件")
     apiKey = input("请输入智谱AI API_KEY以使用在线API推理: ").strip()
+    if not os.path.exists(Path.cwd()/".env"):
+        try:
+            with open(Path.cwd()/".env", "w") as f:
+                f.write(f"ZHIPU_API_KEY=\"{apiKey}\"")
+        except IOError as e:
+            print(f"{e}: Permission denied, Try re-run the program by using \'sudo\'.")
+        except Exception as e:
+            print(f"Unknown error occurred while parsing \'{f}\': {e}")
+        else:
+            print("智谱AI API_KEY已成功写入\".env\"配置文件\n")
 else:
     print(f"成功读取ZHIPU_API_KEY: {apiKey[:10]}...{apiKey[40:]}") #部分显示,保护隐私
     
