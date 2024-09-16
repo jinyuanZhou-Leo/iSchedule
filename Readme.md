@@ -9,8 +9,14 @@
 - **schedule.json:** 课表样例
 
 ## 使用说明
-1. **完成配置文件**
-  **完整的配置文件格式详见schedule.json和config.json**
+1. **完成配置文件**: (完整的配置文件样例详见schedule.json和config.json)
+2. **(如果需要使用AI JSON生成)**: 
+   * 在程序运行目录下创建```.env```文件
+   * 在```.env```文件中填写：```ZHIPU_API_KEY = "your-zhipu-api-key"```
+
+
+
+## Config.json 格式说明 
    * ```defaultFileName```: 默认读取的课程表json文件路径
 
    * ```color```: ("random":表示随机 | Hex色值)生成的ics文件在日历中的颜色
@@ -18,7 +24,7 @@
      * ```enabled```:(True|False) 是否再上课前通知提醒
      * ```minutesBefore```:(Integer) 多少分钟前通知提醒
 
-## Schedule.json格式说明
+## Schedule.json 格式说明
 ### 顶级字段
 - **Name**
   - **类型**: `string`
