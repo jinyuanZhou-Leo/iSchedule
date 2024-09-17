@@ -2,6 +2,7 @@ import json
 import logging
 import random
 import os
+# from types import SimpleNamespace TODO:使用configDict.xxx优化代码
 from tqdm import tqdm,trange
 from pathlib import Path
 from data import Course, Term
@@ -21,17 +22,19 @@ def isHexColor(str):
     return False
 
 def generateICS(term:Term, baseName:str, configDict) -> bool:
+    global VERSION
     """
     Generates an ICS file from given information.
     Return a boolean indicating whether the file is successfully generated.
     """
     icsFile = ic.Calendar()
     icsFile.add("VERSION", "2.0")
-    icsFile.add("PRODID", "iScheduler")
+    icsFile.add("PRODID", f"iScheduler {VERSION}")
     icsFile.add("CALSCALE", "GREGORIAN")
     icsFile.add("X-APPLE-CALENDAR-COLOR", configDict["color"])
     icsFile.add("X-WR-CALNAME", f"{baseName} - {term.name}")  # 日历名称
     icsFile.add("X-WR-TIMEZONE", "Asia/Shanghai")
+    
     cnt = 0 # day counter
     for date in tqdm(dateRange(term.start, term.end),desc="Generating: ",total=int((term.end - term.start).days) + 1):
         if date.weekday()<5:

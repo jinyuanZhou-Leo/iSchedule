@@ -1,6 +1,8 @@
 {
     "defaultFileName":"schedule.json",
     "color":"#80e22e",
+    "region":"China",
+    "exceptHolidays":"true",
     "alarm":{
         "enabled":true,
         "minutesBefore":7
