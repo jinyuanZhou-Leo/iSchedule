@@ -1,4 +1,4 @@
-## Schedule.json格式说明
+## Schedule.json 格式说明
 ### 顶级字段
 - **Name**
   - **类型**: `string`
