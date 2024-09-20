@@ -2,7 +2,6 @@ import json
 import logging
 import random
 import os
-# from types import SimpleNamespace TODO:使用configDict.xxx优化代码
 from tqdm import tqdm,trange
 from pathlib import Path
 from data import Course, Term
@@ -13,10 +12,14 @@ def dateRange(start, end):
     for n in range(int((end - start).days) + 1):
         yield start + timedelta(n)
         
-def getRandomHexColor():
+def getRandomHexColor() -> str:
+    """Get random HEX color"""
     return "#{:06x}".format(random.randint(0, 0xFFFFFF))
 
-def isHexColor(str):
+def isHexColor(str) -> bool:
+    """
+    Identify if a string is a HEX color
+    """
     if str.startswith("#") and len(str) == 7:
         return True
     return False
@@ -34,6 +37,7 @@ def generateICS(term:Term, baseName:str, configDict) -> bool:
     icsFile.add("X-APPLE-CALENDAR-COLOR", configDict["color"])
     icsFile.add("X-WR-CALNAME", f"{baseName} - {term.name}")  # 日历名称
     icsFile.add("X-WR-TIMEZONE", "Asia/Shanghai")
+    
     
     cnt = 0 # day counter
     for date in tqdm(dateRange(term.start, term.end),desc="Generating: ",total=int((term.end - term.start).days) + 1):
