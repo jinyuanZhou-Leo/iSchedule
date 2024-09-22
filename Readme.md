@@ -3,9 +3,10 @@
 ## 模块功能说明
 - **data.py:** 类
 - **main.py:** 主程序
+- **util.py:** 工具库
 - **json_generator.py:** json格式课程表生成器
 - **rule.md** Schedule.json格式Prompt
-- **config.json:** 配置文件（设置）
+- **config.json:** ics生成配置
 - **schedule.json:** 课表样例
 
 ## 使用说明
@@ -17,21 +18,15 @@
 
 
 ## Config.json 格式说明 
-   * ```defaultFileName```: 默认读取的课程表json文件路径
 
    * ```color```: ("random":表示随机 | Hex色值)生成的ics文件在日历中的颜色
    * ```alarm```:闹钟相关设置
      * ```enabled```:(True|False) 是否再上课前通知提醒
-     * ```minutesBefore```:(Integer) 多少分钟前通知提醒
+     * ```before```:(list[int, int]) 提前多长时间通知：```[小时，分钟]```
 
 ## Schedule.json 格式说明
-### 顶级字段
-- **Name**
-  - **类型**: `string`
-  - **含义**: 表示日程表的名称或标题。
-  - **示例**: `"2025 Schedule"`
 
-### 次顶级字段
+### 顶级字段
 - **Term 1, Term 2, 上学期，下学期......** (学期名称)
   - **类型**: `object`
   - **含义**: 表示一个学期的名字，其子字段为`object`
