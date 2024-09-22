@@ -1,16 +1,19 @@
 *.env
 *.code-workspace
 *.ics
+.DS_Store
+*.spec
+.pipreqs
+
+dev_*.*
+ignore_*.*
+test_*.*
+test*.*
+
+
 .venv/
 __pycache__/
 build/
 Output/
-*.spec
-# 排除所有文件名以test开头的文件，但不排除文件夹
-test*.*
-dev_*.*
-.pipreqs
-
-
 webui/
-.DS_Store
+.vscode/
