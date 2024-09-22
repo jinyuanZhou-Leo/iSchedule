@@ -1,10 +1,8 @@
 {
-    "defaultFileName":"schedule.json",
-    "color":"#80e22e",
-    "region":"China",
-    "exceptHolidays":"true",
-    "alarm":{
-        "enabled":true,
-        "minutesBefore":7
+    "name": "TESTBCA25 Schedule",
+    "color": "#80e24e",
+    "alarm": {
+        "enabled": true,
+        "before": [0,7]
     }
 }
