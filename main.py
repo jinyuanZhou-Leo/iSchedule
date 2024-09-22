@@ -2,8 +2,7 @@ import logging
 import os
 from tqdm import tqdm, trange
 from pathlib import Path
-from datetime import datetime, timedelta, date
-from typing import Dict, Tuple, Any
+from datetime import datetime
 from utils import *
 from data import Term, Course, generateICS
 
@@ -60,7 +59,7 @@ for termName, termData in schedule.items():
             )
         )
 
-logger.info("File parsed successfully")
+print("\n")
 
 # parse config file
 config["name"] = (
@@ -74,9 +73,19 @@ for i in trange(len(terms), desc="Total: "):
     try:
         with open(f"{config['name']} - {terms[i].name}.ics", "wb") as f:
             f.write(ics)
-    except IOError as e:
-        logger.error(f"{e}: Permission denied, Try re-run the program by using 'sudo'.")
-        exit(0)
     except Exception as e:
-        logger.error(f"Unknown error occurred while creating file.")
+        tqdm.write(
+            f"[{i+1} of {len(terms)}] Failed to generate ICS file - {config["name"]} - {terms[i].name}.ics"
+        )
+        if isinstance(e,IOError):
+            logger.error(f"{e}: Permission denied, Try re-run the program by using 'sudo'.")
+        else:
+            logger.error(f"Unknown error occurred while creating file.")
         exit(0)
+    else:
+        tqdm.write(
+            f"[{i+1} of {len(terms)}] Successfully generated ICS file - {config["name"]} - {terms[i].name}.ics"
+        )
+
+print("\n")
+logger.info("To import the ICS file, drag the generated ICS file into your calendar app")
