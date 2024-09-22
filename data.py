@@ -3,9 +3,7 @@ import logging
 import uuid
 import icalendar as ic
 from datetime import datetime, time, timedelta
-from functools import lru_cache
 from utils import *
-import pytz
 
 
 logger = logging.getLogger(__name__)
@@ -83,28 +81,6 @@ class Course:
 
     def getCycleDay(self) -> int:
         return self.cycle * 5
-
-    def getBlockOn(self, day: int) -> list | bool:
-        """
-        Get the list of blocks for a specific day or return False if there are no classes.
-
-        Parameters:
-        day (int): The day for which to get the list of blocks.
-
-        Returns:
-        list: A list of blocks for the specified day.
-        bool: False if there are no classes on the specified day.
-        """
-        blocks: list[int] = []
-        decodedTimetable: list[list[int]] = self.getDecodeTimetable()
-        for i in range(len(decodedTimetable)):
-            if decodedTimetable[i][0] == day:
-                blocks.append(decodedTimetable[i][1])
-
-        if blocks:
-            return blocks
-        else:
-            return False  # if there is no class on that day
 
     def getDecodeTimetable(self, term: Term) -> list[list[int]]:
         def decode_component(component, maximum):
