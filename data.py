@@ -211,7 +211,7 @@ def day2str(remain: int) -> str:
     return map[remain]
 
 
-def generateICS(term: Term, config: dict, mode: str = "rrule") -> bytes:
+def generateICS(term: Term, config: dict) -> bytes:
     mode = mode.lower()
     ics: ic.Calendar = ic.Calendar()
     ics.add("VERSION", "2.0")
@@ -221,43 +221,36 @@ def generateICS(term: Term, config: dict, mode: str = "rrule") -> bytes:
     ics.add("X-WR-CALNAME", f"{config['name']} - {term.name}")
     ics.add("X-WR-TIMEZONE", "Asia/Shanghai")  # TODO: add time zone support
 
-    if mode == "rrule":
-
-        cnt = term.start.weekday() + 1
-        if cnt > 5:
-            cnt = 5
-
-        initDay: datetime = term.start - timedelta(days=term.start.weekday())
-        for course in term.courses:
-            timetable = course.getDecodeTimetable(term)
-            # print(timetable)
-            for timestamp in timetable:
-                for day in timestamp[0]:
-                    weekInfo: list[int, int] = getWeekInfo(day)
-                    event: ic.Event = course.eventify(
-                        term,
-                        initDay + timedelta(weeks=weekInfo[1], days=weekInfo[0] - 1),
-                        timestamp[1],
+    initDay: datetime = term.start - timedelta(days=term.start.weekday())
+    for course in term.courses:
+        timetable = course.getDecodeTimetable(term)
+        for timestamp in timetable:
+            for day in timestamp[0]:
+                weekInfo: list[int, int] = getWeekInfo(day)
+                event: ic.Event = course.eventify(
+                    term,
+                    initDay + timedelta(weeks=weekInfo[1], days=weekInfo[0] - 1),
+                    timestamp[1],
+                )
+                if config["alarm"]["enabled"] == True:
+                    reminder: ic.Alarm = ic.Alarm()
+                    reminder.add("ACTION", "DISPLAY")
+                    reminder.add("DESCRIPTION", "提醒事项")
+                    reminder.add(
+                        "TRIGGER",
+                        timedelta(
+                            hours=-config["alarm"]["before"][0],
+                            minutes=-config["alarm"]["before"][1],
+                        ),
                     )
-                    if config["alarm"]["enabled"] == True:
-                        reminder: ic.Alarm = ic.Alarm()
-                        reminder.add("ACTION", "DISPLAY")
-                        reminder.add("DESCRIPTION", "提醒事项")
-                        reminder.add(
-                            "TRIGGER",
-                            timedelta(
-                                hours=-config["alarm"]["before"][0],
-                                minutes=-config["alarm"]["before"][1],
-                            ),
-                        )
-                        event.add_component(reminder)
-                    rrule = ic.vRecur(
-                        freq="weekly",
-                        interval=course.cycle,
-                        byday=day2str(weekInfo[0]),
-                        until=term.end,
-                    )
-                    event.add("RRULE", rrule)
-                    ics.add_component(event)
+                    event.add_component(reminder)
+                rrule = ic.vRecur(
+                    freq="weekly",
+                    interval=course.cycle,
+                    byday=day2str(weekInfo[0]),
+                    until=term.end,
+                )
+                event.add("RRULE", rrule)
+                ics.add_component(event)
 
     return ics.to_ical()
