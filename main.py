@@ -1,178 +1,82 @@
-import json
 import logging
-import random
 import os
-from tqdm import tqdm,trange
+from tqdm import tqdm, trange
 from pathlib import Path
-from data import Course, Term
-from datetime import datetime, timedelta
-import icalendar as ic
+from datetime import datetime, timedelta, date
+from typing import Dict, Tuple, Any
+from utils import *
+from data import Term, Course, generateICS
 
-def dateRange(start, end):
-    for n in range(int((end - start).days) + 1):
-        yield start + timedelta(n)
-        
-def getRandomHexColor() -> str:
-    """Get random HEX color"""
-    return "#{:06x}".format(random.randint(0, 0xFFFFFF))
-
-def isHexColor(str) -> bool:
-    """
-    Identify if a string is a HEX color
-    """
-    if str.startswith("#") and len(str) == 7:
-        return True
-    return False
-
-def generateICS(term:Term, baseName:str, configDict) -> bool:
-    global VERSION
-    """
-    Generates an ICS file from given information.
-    Return a boolean indicating whether the file is successfully generated.
-    """
-    icsFile = ic.Calendar()
-    icsFile.add("VERSION", "2.0")
-    icsFile.add("PRODID", f"iScheduler {VERSION}")
-    icsFile.add("CALSCALE", "GREGORIAN")
-    icsFile.add("X-APPLE-CALENDAR-COLOR", configDict["color"])
-    icsFile.add("X-WR-CALNAME", f"{baseName} - {term.name}")  # 日历名称
-    icsFile.add("X-WR-TIMEZONE", "Asia/Shanghai")
-    
-    
-    cnt = 0 # day counter
-    for date in tqdm(dateRange(term.start, term.end),desc="Generating: ",total=int((term.end - term.start).days) + 1):
-        if date.weekday()<5:
-            if cnt>=term.cycleWeek:
-                cnt = 0  
-            for course in term.courses:
-                blocksList = course.get_block_on(cnt)
-                if blocksList:
-                    for block in blocksList:
-                        event = course.eventify(date, block)
-                        if configDict["alarm"]["enabled"] == True:
-                            reminder = ic.Alarm()
-                            reminder.add("ACTION","DISPLAY")
-                            reminder.add("DESCRIPTION", "提醒事项")
-                            reminder.add("TRIGGER", timedelta(minutes=-configDict["alarm"]["minutesBefore"]))
-                            event.add_component(reminder)  
-                            
-                        icsFile.add_component(event)        
-            cnt+=1
-            
-
-    fileName = f"{baseName} - {term.name}.ics"
-    try:
-        with open(fileName, "wb") as f:
-            f.write(icsFile.to_ical())
-            return True
-    except IOError as e:
-        logger.error(f"{e}: Permission denied, Try re-run the program by using \'sudo\'.")
-        return False
-    except Exception as e:
-        logger.error(f"Unknown error occurred while parsing \'{f}\': {e}")
-        return False  
-
-def loadJsonFile(path:Path):
-    """Json.load() with proper error handling"""
-    try:
-        with path.open() as f:
-            try:
-                data = json.load(f)
-                logger.info(f"{f.name} is successfully parsed")
-                return data
-            except json.JSONDecodeError:
-                logger.error(f"Invalid JSON format in {path}")
-            exit(0)
-    except FileNotFoundError as e:
-        logger.error(e)
-    except IOError as e:
-        logger.error(f"{e}\nPermission denied, Try re-run the program by using 'sudo'.")
-    except Exception as e:
-        logger.error(f"Unknown error occurred while parsing '{path}'\n{e}")
-    exit(0)
-
-VERSION = "1.6"
-
-#initialize
-
-#initialize logging
+VERSION = "2.0"
 logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.INFO)
-
-formatter = logging.Formatter('%(levelname)s - %(message)s')
-stream_handler = logging.StreamHandler() # for logging in CLI
-stream_handler.setLevel(level = logging.INFO) # log level
+formatter = logging.Formatter("%(levelname)s - %(message)s")
+stream_handler = logging.StreamHandler()  # for logging in CLI
+stream_handler.setLevel(level=logging.INFO)  # log level
 stream_handler.setFormatter(formatter)
 logger.addHandler(stream_handler)
 
-logger.info("iScheduler "+str(VERSION))
+logger.info(f"iScheduler {VERSION}")
+
+# read files
+config: dict = loadJSON(Path.cwd() / "config.json")  # Program configuration
+schedulePath: Path = Path.cwd() / "schedule.json"
+if not os.path.exists(
+    schedulePath
+):  # schedule file with default file name is not found
+    tmp: str = input("ENTER the schedule file path: ").strip()
+    if (tmp.startswith("'") and tmp.endswith("'")) or (
+        tmp.startswith('"') and tmp.endswith('"')
+    ):
+        tmp = tmp[1:-1]  # remove quotes
+    schedulePath = Path(tmp)
+schedule: dict = loadJSON(schedulePath)
 
 
+# parse schedule file into objects
+terms: list[Term] = []
+for termName, termData in schedule.items():
+    tmp: Term = Term(
+        termName,
+        datetime(*termData["start"]),
+        datetime(*termData["end"]),
+        termData["classDuration"],
+        termData["classStartingTime"],
+        termData["cycleWeek"],
+    )
+    terms.append(tmp)
+    for courseName, courseData in termData["courses"].items():
+        tmpCycle: int = -1
+        if courseData.get("cycle") is not None:
+            tmpCycle = int(courseData["cycle"])
 
-configDict = loadJsonFile(Path.cwd() / "config.json")
+        tmp.add_course(
+            Course(
+                courseName,
+                courseData["teacher"],
+                courseData["room"],
+                courseData["time"],
+                tmpCycle,
+            )
+        )
 
-schedulePath = Path.cwd() / configDict["defaultFileName"]
-if not os.path.exists(schedulePath):
-    schedulePathInput = input("Please enter the schedule file path: ").strip()
-    if (schedulePathInput.startswith("\'") and schedulePathInput.endswith("\'")) or (schedulePathInput.startswith("\"") and schedulePathInput.endswith("\"")):
-            schedulePathInput = schedulePathInput[1:-1] #去掉引号
-    schedulePath = Path(schedulePathInput)
-    
-scheduleDict = loadJsonFile(schedulePath)
+logger.info("File parsed successfully")
 
+# parse config file
+config["name"] = (
+    config["name"]
+    if config["name"] != ""
+    else f"Schedule-{datetime.now().strftime('%X-%Y.%m.%d')}"
+)
 
-
-# schedule parser
-termsDict = dict(filter(lambda x: x[0] != 'Name', scheduleDict.items())) # filter out "Name" key
-termsObjList = []
-for t in termsDict:
-    termTmp = Term(t,scheduleDict[t]["start"],scheduleDict[t]["end"], scheduleDict[t]["classDuration"], scheduleDict[t]["classStartingTime"],scheduleDict[t]["cycleWeek"])
-    termsObjList.append(termTmp)
-    for c in scheduleDict[t]["courses"]:
-        courseTmp = Course(c,scheduleDict[t]["courses"][c]["teacher"],scheduleDict[t]["courses"][c]["time"],scheduleDict[t]["courses"][c]["room"])
-        termTmp.addCourse(courseTmp) 
-
-logger.debug("Schedule is successfully objectified")
-
-while True:
-    colorInput = input(f"\nHEX color for ICS file (ENTER for defult - {configDict["color"]}):").strip() 
-    if colorInput!="": #不使用默认设置，则覆盖默认设置
-        configDict["color"] = colorInput
-    else:
-        logger.info("Using default setting")
-        
-    if configDict["color"].lower() == "random":
-        configDict["color"] = getRandomHexColor()
-        break
-    elif not isHexColor(configDict["color"]):
-        logger.error(f"Invalid HEX color format - \"{configDict["color"]}\", Example: #FF50FF")
-    else:
-        break
-
-baseName = ""
-if "Name" not in scheduleDict:
-    logger.error("Schedule file does not have a name")
-    nameInput = input("Please enter the schedule name (Enter for using default setting):")
-    if nameInput == "":
-        baseName = f"Schedule-{datetime.now().strftime('%X-%Y.%m.%d')}"
-    else:
-        baseName = nameInput
-else:
-    baseName = scheduleDict["Name"]
-
-if configDict["alarm"]["enabled"] != True:
-    configDict["alarm"]["minutesBefore"] = 0 #没启用则归零
-
-
-# generate .ics file for each term
-for i in trange(len(termsObjList),desc="Total: "):
-    termObj = termsObjList[i]
-    if generateICS(termObj,baseName,configDict):
-        tqdm.write(f"[{i+1} of {len(termsObjList)}] Successfully generated ICS file - {baseName} - {termObj.name}.ics")
-    else:
-        tqdm.write(f"[{i+1} of {len(termsObjList)}] Failed to generate ICS file - {baseName} - {termObj.name}.ics")
-
-print("\n")
-
-logger.info("To import the ICS file, drag the generated ICS file into your calendar app")
-
+for i in trange(len(terms), desc="Total: "):
+    ics = generateICS(terms[i], config)
+    try:
+        with open(f"{config['name']} - {terms[i].name}.ics", "wb") as f:
+            f.write(ics)
+    except IOError as e:
+        logger.error(f"{e}: Permission denied, Try re-run the program by using 'sudo'.")
+        exit(0)
+    except Exception as e:
+        logger.error(f"Unknown error occurred while creating file.")
+        exit(0)
