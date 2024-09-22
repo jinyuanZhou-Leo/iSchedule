@@ -50,10 +50,9 @@ class Term:
         self.courses = []
         self.uuid = str(uuid.uuid4())
 
-    def add_course(self, course: "Course") -> None:
-        course.setCycle(self.cycle)
-        # 将课程对象添加到学生的课程列表中
-        self.courses.append(course)
+    def addCourse(self, course: "Course") -> None:
+        course.setCycle(self.cycle)  # set the cycle number of the course instance
+        self.courses.append(course)  # add course instance into the term instance
 
     def __str__(self) -> str:
         return f"Term - {self.uuid}:\n   Start: {self.start}\n   End: {self.end}\n   Class Duration: {self.classDuration} minutes\n   Class Starting Time: {self.classStartingTime}\n   Cycle: {self.cycle}"
@@ -76,7 +75,9 @@ class Course:
         self.cycle = cycle
 
     def setCycle(self, cycle: int) -> None:
-        if self.cycle == -1:
+        if (
+            self.cycle == -1
+        ):  # set the cycle number according to the term instance only if the cycle number of course is not defined
             self.cycle = cycle
 
     def getCycleDay(self) -> int:
@@ -84,11 +85,27 @@ class Course:
 
     def getDecodeTimetable(self, term: Term) -> list[list[int]]:
         def decode_component(component, maximum):
+            """
+            Decode a component of a schedule.
+
+            This function decodes a given component into a list of corresponding numbers based on the predefined dictionary.
+            The component can be an integer, a string abbreviation, or a list containing integers and string abbreviations.
+
+            Parameters:
+            - component: The component to be decoded, can be an integer, a string, or a list.
+            - maximum: The maximum value that the component can represent.
+
+            Returns:
+            - Returns a list of decoded numbers corresponding to the input component.
+            """
+            # Define a dictionary for different types of abbreviations, mapping to the corresponding number list
             abbrDict = {
-                "odd": [i for i in range(1, maximum + 1, 2)],
-                "even": [i for i in range(2, maximum + 1, 2)],
-                "everyday": [i for i in range(1, maximum + 1)],
+                "odd": [i for i in range(1, maximum + 1, 2)],  # List of odd days
+                "even": [i for i in range(2, maximum + 1, 2)],  # List of even days
+                "everyday": [i for i in range(1, maximum + 1)],  # List of all days
             }
+
+            # If the component is an integer, check if it is within the valid range
             if isinstance(component, int):
                 if component > self.getCycleDay() or component < 1:
                     logger.critical(
@@ -96,10 +113,13 @@ class Course:
                     )
                     exit(0)
                 return [component]
+
+            # If the component is a string abbreviation, convert it to the corresponding number list
             elif isinstance(component, str):
                 return abbrDict[component.lower()]
 
-            elif isinstance(component, list):  # [10,"odd"]
+            # If the component is a list, process each item in the list
+            elif isinstance(component, list):
                 tmp = []
                 for item in component:
                     if isinstance(item, int):
@@ -112,6 +132,8 @@ class Course:
                         )
                         exit(0)
                 return tmp
+
+            # If the component is of an unsupported type, output an error message and exit
             else:
                 logger.critical(
                     f"Invalid schedule file, Error processing {term}.{self.name}.time, {component} can not be indentified"

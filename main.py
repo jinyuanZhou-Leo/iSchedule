@@ -15,7 +15,7 @@ stream_handler.setLevel(level=logging.INFO)  # log level
 stream_handler.setFormatter(formatter)
 logger.addHandler(stream_handler)
 
-logger.info(f"iScheduler {VERSION}")
+logger.info(f"iSchedule {VERSION}")
 
 # read files
 config: dict = loadJSON(Path.cwd() / "config.json")  # Program configuration
@@ -45,17 +45,17 @@ for termName, termData in schedule.items():
     )
     terms.append(tmp)
     for courseName, courseData in termData["courses"].items():
-        tmpCycle: int = -1
+        courseCycle: int = -1
         if courseData.get("cycle") is not None:
-            tmpCycle = int(courseData["cycle"])
+            courseCycle = int(courseData["cycle"])
 
-        tmp.add_course(
+        tmp.addCourse(
             Course(
                 courseName,
                 courseData["teacher"],
                 courseData["room"],
                 courseData["time"],
-                tmpCycle,
+                courseCycle,
             )
         )
 
