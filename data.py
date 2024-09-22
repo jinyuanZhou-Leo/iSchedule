@@ -186,25 +186,10 @@ class Course:
 
         return event
 
-
-def workdayRange(start: datetime, end: datetime):
-    for n in range(int((end - start).days) + 1):
-        day = start + timedelta(days=n)
-        if day.weekday() < 5:
-            yield day
-
-
-def workday2day(workday: int) -> int:
-    fullWeek = workday // 5 if workday % 5 != 0 else workday // 5 - 1
-    remain = workday - fullWeek * 5
-    return fullWeek * 7 + remain
-
-
 def getWeekInfo(day: int) -> list[int, int]:
     fullWeek = day // 5 if day % 5 != 0 else day // 5 - 1
     remain = day - fullWeek * 5
     return [remain, fullWeek]
-
 
 def day2str(remain: int) -> str:
     map: dict = {1: "MO", 2: "TU", 3: "WE", 4: "TH", 5: "FR"}
@@ -212,7 +197,6 @@ def day2str(remain: int) -> str:
 
 
 def generateICS(term: Term, config: dict) -> bytes:
-    mode = mode.lower()
     ics: ic.Calendar = ic.Calendar()
     ics.add("VERSION", "2.0")
     ics.add("PRODID", "iScheduler by @Jinyuan")
