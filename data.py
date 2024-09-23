@@ -6,29 +6,43 @@ from datetime import datetime, time, timedelta
 from utils import *
 
 
+class Location:
+    name: str
+    latitude: float | str
+    longitude: float | str
+
+    def __init__(self, name, latitude, longitute) -> None:
+        self.name = name
+        self.latitude = latitude
+        self.longitude = longitute
+
+    def __str__(self) -> str:
+        return f"[{self.name}]: ({self.latitude}, {self.longitude})"
+
+
 class Term:
-    name: str = "Term"
-    uuid: str = ""
-    start: datetime = None
-    end: datetime = None
-    classDuration: int = 0
-    classStartingTime: list[list[int, int]] = []
-    cycle: int = -1
-    courses: list["Course"] = []
+    name: str
+    uuid: str
+    start: datetime
+    end: datetime
+    duration: int
+    timetable: list[list[int, int]]
+    cycle: int
+    courses: list["Course"]
 
     def __init__(
         self,
         name: str,
         start: datetime,
         end: datetime,
-        classDuration: int,
-        classStartingTime: list[list[int]],
+        duration: int,
+        timetable: list[list[int]],
         cycle: int,
     ) -> None:
         self.name = name
         self.start, self.end = start, end
-        self.classDuration = classDuration
-        self.classStartingTime = classStartingTime
+        self.duration = duration
+        self.timetable = timetable
 
         if cycle <= 0:
             logger.critical(
@@ -46,23 +60,28 @@ class Term:
         self.courses.append(course)  # add course instance into the term instance
 
     def __str__(self) -> str:
-        return f"Term - {self.uuid}:\n   Start: {self.start}\n   End: {self.end}\n   Class Duration: {self.classDuration} minutes\n   Class Starting Time: {self.classStartingTime}\n   Cycle: {self.cycle}"
+        return f"Term - {self.uuid}:\n   Start: {self.start}\n   End: {self.end}\n   Class Duration: {self.duration} minutes\n   Timetable: {self.timetable}\n   Cycle: {self.cycle}"
 
 
 class Course:
-    name: str = None
-    teacher: str = None
-    room: str = None
-    timetable: list[list[any]] = []
-    cycle: int = -1
+    name: str
+    teacher: str
+    location: str | Location
+    index: list[list[any]]
+    cycle: int
 
     def __init__(
-        self, name: str, teacher: str, room: str, timetable: list[list[any]], cycle: int
+        self,
+        name: str,
+        teacher: str,
+        location: str | Location,
+        index: list[list[any]],
+        cycle: int,
     ) -> None:
         self.name = name
         self.teacher = teacher
-        self.room = room
-        self.timetable = timetable
+        self.location = location
+        self.index = index
         self.cycle = cycle
 
     def setCycle(self, cycle: int) -> None:
@@ -74,7 +93,7 @@ class Course:
     def getCycleDay(self) -> int:
         return self.cycle * 5
 
-    def getDecodeTimetable(self, term: Term) -> list[list[int]]:
+    def getDecodedIndex(self, term: Term) -> list[list[int]]:
 
         def decode_component(component: list | str | int, maximum: int):
             """
@@ -150,36 +169,34 @@ class Course:
             result = [[sorted(keys), value] for value, keys in merged_result.items()]
             return result
 
-        decodedTimetable = []
-        for timestamp in self.timetable:  # [1,2], ["odd",3]
+        product = []
+        for timestamp in self.index:  # [1,2], ["odd",3]
             # 求decodeTimestamp笛卡尔积
-            decodedTimetable.extend(
+            product.extend(
                 [
                     list(t)
                     for t in itertools.product(
                         [x for x in decode_component(timestamp[0], self.cycle * 5)],
                         [
                             x - 1
-                            for x in decode_component(
-                                timestamp[1], len(term.classStartingTime)
-                            )
+                            for x in decode_component(timestamp[1], len(term.timetable))
                         ],
                     )
                 ]
             )
-        return mergeFirstItem(decodedTimetable)
+        return mergeFirstItem(product)
 
     def eventify(self, term: Term, date: datetime, block: int) -> ic.Event:
         event: ic.Event = ic.Event()
         event.add("summary", self.name)
-        event.add("description", f"{self.teacher}\n{self.room}")
+        event.add("description", f"{self.teacher}\n{self.location}")
         event.add(
             "dtstart",
             datetime.combine(
                 date,
                 time(
-                    term.classStartingTime[block][0],
-                    term.classStartingTime[block][1],
+                    term.timetable[block][0],
+                    term.timetable[block][1],
                 ),
             ),
         )
@@ -188,11 +205,11 @@ class Course:
             datetime.combine(
                 date,
                 time(
-                    term.classStartingTime[block][0],
-                    term.classStartingTime[block][1],
+                    term.timetable[block][0],
+                    term.timetable[block][1],
                 ),
             )
-            + timedelta(minutes=term.classDuration),
+            + timedelta(minutes=term.duration),
         )
         event.add("dtstamp", datetime.now())
         event.add("uid", uuid.uuid4())
@@ -222,7 +239,7 @@ def generateICS(term: Term, config: dict) -> bytes:
 
     initDay: datetime = term.start - timedelta(days=term.start.weekday())
     for course in term.courses:
-        timetable = course.getDecodeTimetable(term)
+        timetable = course.getDecodedIndex(term)
         for timestamp in timetable:
             for day in timestamp[0]:
                 weekInfo: list[int, int] = getWeekInfo(day)
