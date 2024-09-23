@@ -35,8 +35,8 @@ for termName, termData in schedule.items():
         termName,
         datetime(*termData["start"]),
         datetime(*termData["end"]),
-        termData["classDuration"],
-        termData["classStartingTime"],
+        termData["duration"],
+        termData["timetable"],
         termData["cycleWeek"],
     )
     terms.append(tmp)
@@ -49,8 +49,8 @@ for termName, termData in schedule.items():
             Course(
                 courseName,
                 courseData["teacher"],
-                courseData["room"],
-                courseData["time"],
+                courseData["location"],
+                courseData["index"],
                 courseCycle,
             )
         )
