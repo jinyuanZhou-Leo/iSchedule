@@ -107,16 +107,15 @@ def parseHexColor(hexColor: str) -> str:
 
 def extractJSONFromMarkdown(markdown_text):
     """
-    从Markdown文本中提取JSON代码块。
+    Extract JSON content from Markdown text.
 
-    该函数通过正则表达式匹配Markdown文本中的JSON代码块，并将它们提取出来。
-    Markdown中，JSON代码块通常被```json ```包围。
+    This function uses a regular expression to match JSON code blocks in the Markdown text and extracts their content. It is suitable for processing JSON data embedded within Markdown formatted text.
 
-    参数:
-    markdown_text (str): 包含JSON代码块的Markdown文本。
+    Parameters:
+    - markdown_text (str): The Markdown formatted text containing JSON data.
 
-    返回:
-    str: 所有提取出的JSON代码块内容的字符串，连接在一起。
+    Returns:
+    - str: The extracted JSON data as a string. Returns an empty string if no matching JSON code blocks are found.
     """
     pattern = re.compile(r"```json\n(.*?)```", re.DOTALL)
     matches = pattern.findall(markdown_text)
