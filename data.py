@@ -1,18 +1,9 @@
 import itertools
-import logging
 import uuid
 import icalendar as ic
+from loguru import logger
 from datetime import datetime, time, timedelta
 from utils import *
-
-
-logger = logging.getLogger(__name__)
-logger.setLevel(level=logging.INFO)
-formatter = logging.Formatter("%(levelname)s - %(message)s")
-stream_handler = logging.StreamHandler()
-stream_handler.setLevel(level=logging.INFO)
-stream_handler.setFormatter(formatter)
-logger.addHandler(stream_handler)
 
 
 class Term:
@@ -84,7 +75,8 @@ class Course:
         return self.cycle * 5
 
     def getDecodeTimetable(self, term: Term) -> list[list[int]]:
-        def decode_component(component, maximum):
+
+        def decode_component(component: list | str | int, maximum: int):
             """
             Decode a component of a schedule.
 
@@ -156,7 +148,6 @@ class Course:
 
             # 对每个列表中的第一项进行排序，并将结果转换为原始格式
             result = [[sorted(keys), value] for value, keys in merged_result.items()]
-
             return result
 
         decodedTimetable = []
@@ -217,7 +208,6 @@ def day2str(remain: int) -> str:
     map: dict = {1: "MO", 2: "TU", 3: "WE", 4: "TH", 5: "FR"}
     return map[remain]
 
-
 def generateICS(term: Term, config: dict) -> bytes:
     ics: ic.Calendar = ic.Calendar()
     ics.add("VERSION", "2.0")
@@ -255,7 +245,8 @@ def generateICS(term: Term, config: dict) -> bytes:
                     interval=course.cycle,
                     byday=day2str(weekInfo[0]),
                     until=term.end,
-                )
+                )  # TODO: work around, try to merge some rrule which are in the same week
+                logger.debug(f"Adding {course.name} with rrule:{rrule}")
                 event.add("RRULE", rrule)
                 ics.add_component(event)
 

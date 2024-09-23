@@ -1,18 +1,16 @@
-import logging
 import json
 import random
-from utils import *
+import re
 from pathlib import Path
+from loguru import logger
 
-__all__ = ["loadJSON", "getRandomHexColor", "isHexColor", "parseHexColor"]
-
-logger = logging.getLogger(__name__)
-logger.setLevel(level=logging.INFO)
-formatter = logging.Formatter("%(levelname)s - %(message)s")
-stream_handler = logging.StreamHandler()  # for logging in CLI
-stream_handler.setLevel(level=logging.INFO)  # log level
-stream_handler.setFormatter(formatter)
-logger.addHandler(stream_handler)
+__all__ = [
+    "loadJSON",
+    "getRandomHexColor",
+    "isHexColor",
+    "parseHexColor",
+    "extractJSONFromMarkdown",
+]
 
 
 def loadJSON(path: Path) -> any:
@@ -29,17 +27,19 @@ def loadJSON(path: Path) -> any:
         with path.open() as f:
             try:
                 data = json.load(f)
-                logger.info(f"{f.name} is successfully parsed")
+                logger.success(f"{f.name} is successfully parsed")
                 return data
             except json.JSONDecodeError:
-                logger.error(f"Invalid JSON format in {path}")
+                logger.critical(f"Invalid JSON format in {path}")
             exit(0)
     except FileNotFoundError as e:
-        logger.error(e)
+        logger.critical(e)
     except IOError as e:
-        logger.error(f"{e}\nPermission denied, Try re-run the program by using 'sudo'.")
+        logger.critical(
+            f"{e}\nPermission denied, Try re-run the program by using 'sudo'."
+        )
     except Exception as e:
-        logger.error(f"Unknown error occurred while parsing '{path}'\n{e}")
+        logger.critical(f"Unknown error occurred while parsing '{path}'\n{e}")
     exit(0)
 
 
@@ -103,3 +103,21 @@ def parseHexColor(hexColor: str) -> str:
         tmp = getRandomHexColor()
         logger.error(f"Invalid color code: {hexColor}, using {tmp} instead.")
         return tmp
+
+
+def extractJSONFromMarkdown(markdown_text):
+    """
+    从Markdown文本中提取JSON代码块。
+
+    该函数通过正则表达式匹配Markdown文本中的JSON代码块，并将它们提取出来。
+    Markdown中，JSON代码块通常被```json ```包围。
+
+    参数:
+    markdown_text (str): 包含JSON代码块的Markdown文本。
+
+    返回:
+    str: 所有提取出的JSON代码块内容的字符串，连接在一起。
+    """
+    pattern = re.compile(r"```json\n(.*?)```", re.DOTALL)
+    matches = pattern.findall(markdown_text)
+    return "".join(matches)

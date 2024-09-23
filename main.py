@@ -1,5 +1,6 @@
-import logging
 import os
+import sys
+from loguru import logger
 from tqdm import tqdm, trange
 from pathlib import Path
 from datetime import datetime
@@ -7,14 +8,9 @@ from utils import *
 from data import Term, Course, generateICS
 
 VERSION = "2.0"
-logger = logging.getLogger(__name__)
-logger.setLevel(level=logging.INFO)
-formatter = logging.Formatter("%(levelname)s - %(message)s")
-stream_handler = logging.StreamHandler()  # for logging in CLI
-stream_handler.setLevel(level=logging.INFO)  # log level
-stream_handler.setFormatter(formatter)
-logger.addHandler(stream_handler)
 
+logger.remove()
+logger.add(lambda msg: tqdm.write(msg, end=""), format="{level}: <level>{message}</level>", level="INFO", colorize=True)
 logger.info(f"iSchedule {VERSION}")
 
 # read files
@@ -68,22 +64,23 @@ config["name"] = (
     else f"Schedule-{datetime.now().strftime('%X-%Y.%m.%d')}"
 )
 
+
 for i in trange(len(terms), desc="Total: "):
     ics = generateICS(terms[i], config)
     try:
         with open(f"{config['name']} - {terms[i].name}.ics", "wb") as f:
             f.write(ics)
     except Exception as e:
-        tqdm.write(
+        logger.error(
             f"[{i+1} of {len(terms)}] Failed to generate ICS file - {config["name"]} - {terms[i].name}.ics"
         )
         if isinstance(e,IOError):
-            logger.error(f"{e}: Permission denied, Try re-run the program by using 'sudo'.")
+            logger.critical(f"{e}: Permission denied, Try re-run the program by using 'sudo'.")
         else:
-            logger.error(f"Unknown error occurred while creating file.")
+            logger.critical(f"Unknown error occurred while creating file.")
         exit(0)
     else:
-        tqdm.write(
+        logger.success(
             f"[{i+1} of {len(terms)}] Successfully generated ICS file - {config["name"]} - {terms[i].name}.ics"
         )
 
