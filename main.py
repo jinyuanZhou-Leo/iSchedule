@@ -37,7 +37,7 @@ for termName, termData in schedule.items():
         datetime(*termData["end"]),
         termData["duration"],
         termData["timetable"],
-        termData["cycleWeek"],
+        termData["cycle"],
     )
     terms.append(tmp)
     for courseName, courseData in termData["courses"].items():

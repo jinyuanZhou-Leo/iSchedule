@@ -4,7 +4,7 @@
         "end":[2024,11,2],
         "duration":70,
         "timetable":[[8,0],[9,15],[10,30],[13,0],[14,15]],
-        "cycleWeek":2,
+        "cycle":2,
         "courses":{
             "Calculus 12":{
                 "teacher":"Charles Zhang",
