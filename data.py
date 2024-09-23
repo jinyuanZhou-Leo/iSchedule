@@ -199,14 +199,17 @@ class Course:
 
         return event
 
+
 def getWeekInfo(day: int) -> list[int, int]:
     fullWeek = day // 5 if day % 5 != 0 else day // 5 - 1
     remain = day - fullWeek * 5
     return [remain, fullWeek]
 
+
 def day2str(remain: int) -> str:
     map: dict = {1: "MO", 2: "TU", 3: "WE", 4: "TH", 5: "FR"}
     return map[remain]
+
 
 def generateICS(term: Term, config: dict) -> bytes:
     ics: ic.Calendar = ic.Calendar()
