@@ -2,60 +2,60 @@
     "Term 1":{
         "start":[2024,9,2],
         "end":[2024,11,2],
-        "classDuration":70,
-        "classStartingTime":[[8,0],[9,15],[10,30],[13,0],[14,15]],
+        "duration":70,
+        "timetable":[[8,0],[9,15],[10,30],[13,0],[14,15]],
         "cycleWeek":2,
         "courses":{
             "Calculus 12":{
                 "teacher":"Charles Zhang",
-                "time":[["even",1]],
-                "room":"A205"
+                "index":[["even",1]],
+                "location":"A205"
             },
             "Physics 12":{
                 "teacher":"Charles Zhang",
-                "time":[["odd",1]],
-                "room":"A205"
+                "index":[["odd",1]],
+                "location":"A205"
             },
             "English Studies 12":{
                 "teacher":"Lucy Liu",
-                "time":[["everyday",2]],
-                "room":"A311"
+                "index":[["everyday",2]],
+                "location":"A311"
             },
             "Career-Life Connections":{
                 "teacher":"Amy Hughes",
-                "time":[[[1,6],3]],
-                "room":"A306"
+                "index":[[[1,6],3]],
+                "location":"A306"
             },
             "Chemistry 12":{
                 "teacher":"Hayden Raulin",
-                "time":[["odd",5]],
-                "room":"A214"
+                "index":[["odd",5]],
+                "location":"A214"
             },
             "Mandarin 12":{
                 "teacher":"吴圣哲",
                 "cycle":1,
-                "time":[[[2,4],3]],
-                "room":"A312/A212"
+                "index":[[[2,4],3]],
+                "location":"A312/A212"
             },
             "CIS 12":{
                 "teacher":"Don Park",
-                "time":[[[3,8],3]],
-                "room":"A206"
+                "index":[[[3,8],3]],
+                "location":"A206"
             },
             "AP Statistics 12":{
                 "teacher":"Ryan Gruver",
-                "time":[["even",4]],
-                "room":"A310"
+                "index":[["even",4]],
+                "location":"A310"
             },
             "Active Living 12":{
                 "teacher":"Antonio Timor",
-                "time":[["even",5]],
-                "room":"A204"
+                "index":[["even",5]],
+                "location":"A204"
             },
             "Support 12":{
                 "teacher": "Evan Lemay",
-                "time":[["odd",4],[[5,10],3]],
-                "room":"A308/Library"
+                "index":[["odd",4],[[5,10],3]],
+                "location":"A308/Library"
             }
         }
     }
