@@ -14,13 +14,16 @@ class Location:
     latitude: float | str
     longitude: float | str
 
-    def __init__(self, name, latitude, longitute) -> None:
+    def __init__(self, name="", latitude=0, longitute=0) -> None:
         self.name = name
         self.latitude = latitude
         self.longitude = longitute
 
     def __str__(self) -> str:
-        return f"[{self.name}]: ({self.latitude}, {self.longitude})"
+        if self.name == "" and self.latitude == 0 and self.longitude == 0:
+            return f"Empty Location Instance <{id(self)}>"
+        else:
+            return f"[{self.name}]: ({self.latitude}, {self.longitude})"
 
 
 class Term:
@@ -49,7 +52,7 @@ class Term:
 
         if cycle <= 0:
             logger.critical(
-                f'Invalid cycle number for "{self.name}", cycle number should be positive integer'
+                f'Invalid global cycle number "{cycle}" for "{self.name}", global cycle number should be positive integer'
             )
             exit(0)
         else:
@@ -63,13 +66,13 @@ class Term:
         self.courses.append(course)  # add course instance into the term instance
 
     def __str__(self) -> str:
-        return f"Term - {self.uuid}:\n   Start: {self.start}\n   End: {self.end}\n   Class Duration: {self.duration} minutes\n   Timetable: {self.timetable}\n   Cycle: {self.cycle}"
+        return f"Term - {self.uuid}:\n   Name: {self.name}\n   Start: {self.start}\n   End: {self.end}\n   Class Duration: {self.duration} minutes\n   Timetable: {self.timetable}\n   Cycle: {self.cycle}"
 
 
 class Course:
     name: str
     teacher: str
-    location: str | Location
+    location: Location
     index: list[list[any]]
     cycle: int
 
@@ -77,9 +80,9 @@ class Course:
         self,
         name: str,
         teacher: str,
-        location: str | Location,
+        location: Location,
         index: list[list[any]],
-        cycle: int,
+        cycle: int | None,
     ) -> None:
         self.name = name
         self.teacher = teacher
@@ -88,10 +91,14 @@ class Course:
         self.cycle = cycle
 
     def setCycle(self, cycle: int) -> None:
-        if (
-            self.cycle == -1
-        ):  # set the cycle number according to the term instance only if the cycle number of course is not defined
-            self.cycle = cycle
+        if self.cycle == None:  # If exceptional cycle is not set
+            self.cycle = cycle  # Apply global setting
+        else:  # If exceptional cycle is set
+            if self.cycle <= 0:
+                logger.error(
+                    f'Invalid cycle number "{cycle}" in {self.name}, It should be positive integer. Program will try to use the global cycle setting.'
+                )
+                self.cycle = cycle  # Rollback to global setting
 
     def getCycleDay(self) -> int:
         return self.cycle * 5
@@ -123,7 +130,7 @@ class Course:
             if isinstance(component, int):
                 if component > self.getCycleDay() or component < 1:
                     logger.critical(
-                        f"Invalid schedule file, Error processing {term}.{self.name}.time, {component} is out of range"
+                        f'Invalid schedule file, Error processing "{term.name}.{self.name}.time", {component} is out of range'
                     )
                     exit(0)
                 return [component]
@@ -142,7 +149,7 @@ class Course:
                         tmp.extend(abbrDict[item.lower()])
                     else:
                         logger.critical(
-                            f"Invalid schedule file, Error processing {term}.{self.name}.time, {item} can not be indentified"
+                            f"Invalid schedule file, Error processing {term.name}.{self.name}.time, {item} can not be indentified"
                         )
                         exit(0)
                 return tmp
@@ -192,7 +199,9 @@ class Course:
     def eventify(self, term: Term, date: datetime, block: int) -> ic.Event:
         event: ic.Event = ic.Event()
         event.add("summary", self.name)
-        event.add("description", f"{self.teacher}\n{self.location}")
+        event.add(
+            "description", f"{self.teacher}\n{self.location.name}"
+        )  # TODO: work around to provide better support for Location and AppleMapLocation
         event.add(
             "dtstart",
             datetime.combine(
