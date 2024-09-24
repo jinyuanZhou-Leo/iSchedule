@@ -8,7 +8,7 @@ from tqdm import tqdm, trange
 from pathlib import Path
 from datetime import datetime
 from utils import *
-from data import Term, Course, generateICS
+from data import Location, Term, Course, generateICS
 
 VERSION = "2.0"
 
@@ -30,31 +30,42 @@ if not os.path.exists(
     schedulePath = Path(tmp)
 schedule: dict = loadJSON(schedulePath)
 
-
 # parse schedule file into objects
 terms: list[Term] = []
 for termName, termData in schedule.items():
     tmp: Term = Term(
-        termName,
-        datetime(*termData["start"]),
-        datetime(*termData["end"]),
-        termData["duration"],
-        termData["timetable"],
-        termData["cycle"],
+        name = termName,
+        start = datetime(*termData["start"]),
+        end = datetime(*termData["end"]),
+        duration = termData["duration"],
+        timetable = termData["timetable"],
+        cycle = termData["cycle"],
     )
     terms.append(tmp)
     for courseName, courseData in termData["courses"].items():
-        courseCycle: int = -1
+        # Term.addCourse() will automatically set the cycle to the course's cycle if it is provided
+        courseCycle: int | None = None 
+        courseLocation:str| Location | None
         if courseData.get("cycle") is not None:
+            logger.warning(f"Exceptional cycle \"{courseData["cycle"]}\" is provided in \"{termName}.{courseName}\" and this will OVERRIDE the default cycle. If you see this warning UNKNOWINGLY, please remove the \"cycle\" field under \"{termName}.courses.{courseName}\"")
+            
             courseCycle = int(courseData["cycle"])
+        if courseData.get("location"):
+            if isinstance(courseData["location"], tuple) or isinstance(courseData["location"], list):
+                courseLocation = Location(*courseData["location"])
+            elif isinstance(courseData["location"], str):
+                courseLocation = Location(name=courseData["location"])
+            else:
+                logger.warning(f"Empty location is provided in \"{termName}.{courseName}\"")
+                courseLocation = None
 
         tmp.addCourse(
             Course(
-                courseName,
-                courseData["teacher"],
-                courseData["location"],
-                courseData["index"],
-                courseCycle,
+                name = courseName,
+                teacher = courseData["teacher"],
+                location = courseLocation,
+                index = courseData["index"],
+                cycle = courseCycle,
             )
         )
 
