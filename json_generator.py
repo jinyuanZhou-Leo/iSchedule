@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# coding=utf-8
+
 from zhipuai import ZhipuAI
 from pathlib import Path
 from dotenv import load_dotenv
