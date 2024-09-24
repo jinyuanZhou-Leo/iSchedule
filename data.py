@@ -50,7 +50,7 @@ class Term:
         self.duration = duration
         self.timetable = timetable
 
-        if cycle <= 0:
+        if cycle <= 0 or not isinstance(cycle, int):
             logger.critical(
                 f'Invalid global cycle number "{cycle}" for "{self.name}", global cycle number should be positive integer'
             )
@@ -157,7 +157,7 @@ class Course:
             # If the component is of an unsupported type, output an error message and exit
             else:
                 logger.critical(
-                    f"Invalid schedule file, Error processing {term}.{self.name}.time, {component} can not be indentified"
+                    f"Invalid schedule file, Error processing {term.name}.{self.name}.time, {component} can not be indentified"
                 )
                 exit(0)
 
@@ -283,3 +283,6 @@ def generateICS(term: Term, config: dict) -> bytes:
                 ics.add_component(event)
 
     return ics.to_ical()
+
+if __name__ == "__main__":
+    logger.warning("This module cannot run independently")

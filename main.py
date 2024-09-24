@@ -2,7 +2,6 @@
 # coding=utf-8
 
 import os
-import sys
 from loguru import logger
 from tqdm import tqdm, trange
 from pathlib import Path
@@ -19,13 +18,11 @@ logger.info(f"iSchedule {VERSION}")
 # read files
 config: dict = loadJSON(Path.cwd() / "config.json")  # Program configuration
 schedulePath: Path = Path.cwd() / "schedule.json"
-if not os.path.exists(
-    schedulePath
-):  # schedule file with default file name is not found
+if not os.path.exists(schedulePath):  
+    # schedule file with default file name is not found
+    logger.warning(f"{schedulePath} does not exist")
     tmp: str = input("ENTER the schedule file path: ").strip()
-    if (tmp.startswith("'") and tmp.endswith("'")) or (
-        tmp.startswith('"') and tmp.endswith('"')
-    ):
+    if (tmp.startswith("'") and tmp.endswith("'")) or (tmp.startswith('"') and tmp.endswith('"')):
         tmp = tmp[1:-1]  # remove quotes
     schedulePath = Path(tmp)
 schedule: dict = loadJSON(schedulePath)

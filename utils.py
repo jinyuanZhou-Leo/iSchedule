@@ -123,3 +123,6 @@ def extractJSONFromMarkdown(markdown_text):
     pattern = re.compile(r"```json\n(.*?)```", re.DOTALL)
     matches = pattern.findall(markdown_text)
     return "".join(matches)
+
+if __name__ == "__main__":
+    logger.warning("This module cannot run independently")
