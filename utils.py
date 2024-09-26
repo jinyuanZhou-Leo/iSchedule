@@ -4,6 +4,8 @@
 import json
 import random
 import re
+import time
+from functools import wraps
 from pathlib import Path
 from loguru import logger
 
@@ -13,7 +15,20 @@ __all__ = [
     "isHexColor",
     "parseHexColor",
     "extractJSONFromMarkdown",
+    "timer",
 ]
+
+
+def timer(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        print(f"{func.__name__} 函数执行耗时：{end_time - start_time:.8f} 秒")
+        return result
+
+    return wrapper
 
 
 def loadJSON(path: Path) -> any:

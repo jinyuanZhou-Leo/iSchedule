@@ -239,7 +239,6 @@ def day2str(remain: int) -> str:
     map: dict = {1: "MO", 2: "TU", 3: "WE", 4: "TH", 5: "FR"}
     return map[remain]
 
-
 def generateICS(term: Term, config: dict) -> bytes:
     ics: ic.Calendar = ic.Calendar()
     ics.add("VERSION", "2.0")
