@@ -58,9 +58,9 @@ APIKEY: str | None = os.getenv("ZHIPU_API_KEY")
 if not APIKEY:
     logger.error('错误:未找到".env"配置文件')
     APIKEY = input("请输入智谱AI API_KEY以使用在线API推理: ").strip()
-    if not os.path.exists(Path.cwd() / ".env"):
+    if not os.path.exists((Path.cwd() / ".env").resolve()):
         try:
-            with open(Path.cwd() / ".env", "w") as f:
+            with open((Path.cwd() / ".env").resolve(), "w") as f:
                 f.write(f'ZHIPU_API_KEY="{APIKEY}"')
         except IOError as e:
             logger.critical(

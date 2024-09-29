@@ -25,6 +25,8 @@ if cliArgs.version:
 logLevel:str = "ERROR" if cliArgs.nolog else "INFO" 
 configPath:Path = Path(cliArgs.config) if cliArgs.config else Path.cwd() / "config.json"
 schedulePath:Path = Path(cliArgs.schedule) if cliArgs.schedule else Path.cwd() / "schedule.json"
+configPath = configPath.resolve()
+schedulePath = schedulePath.resolve()
 
     
 logger.remove()    
@@ -32,14 +34,14 @@ logger.add(lambda msg: tqdm.write(msg, end=""), format="{level}: <level>{message
 logger.info(f"iSchedule {VERSION}")   
 
 # read files
-config: dict = loadJSON(configPath.resolve())  # Program configuration
-if not os.path.exists(schedulePath.resolve()):  
+config: dict = loadJSON(configPath)  # Program configuration
+if not os.path.exists(schedulePath):  
     # schedule file with default file name is not found
     logger.warning(f"{schedulePath} does not exist")
     tmp: str = input("ENTER the schedule file path: ").strip()
     if (tmp.startswith("'") and tmp.endswith("'")) or (tmp.startswith('"') and tmp.endswith('"')):
         tmp = tmp[1:-1]  # remove quotes
-    schedulePath = Path(tmp)
+    schedulePath = Path(tmp).resolve()
 schedule: dict = loadJSON(schedulePath)
 
 # parse schedule file into objects
