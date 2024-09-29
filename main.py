@@ -17,6 +17,7 @@ cliArgumentParser.add_argument('-nl','--nolog',action="store_true", help='不显
 cliArgumentParser.add_argument('-c','--config', type=str, help='配置文件路径')
 cliArgumentParser.add_argument('-s',"--schedule",type=str, help="JSON时间配置文件路径")
 cliArgumentParser.add_argument('-o','--output', type=str, help='输出目录')
+cliArgumentParser.add_argument('-d','-single-day',type=int,help='生成指定工作日编号的ICS') #TODO: add support for single day generation
 cliArgs = cliArgumentParser.parse_args()
 
 if cliArgs.version:
