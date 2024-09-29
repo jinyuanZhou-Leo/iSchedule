@@ -16,6 +16,7 @@ cliArgumentParser.add_argument('-v', '--version',action="store_true", help='显�
 cliArgumentParser.add_argument('-nl','--nolog',action="store_true", help='不显示警告与提示信息')
 cliArgumentParser.add_argument('-c','--config', type=str, help='配置文件路径')
 cliArgumentParser.add_argument('-s',"--schedule",type=str, help="JSON时间配置文件路径")
+cliArgumentParser.add_argument('-o','--output', type=str, help='输出目录')
 cliArgs = cliArgumentParser.parse_args()
 
 if cliArgs.version:
@@ -23,10 +24,9 @@ if cliArgs.version:
     exit(0)
 
 logLevel:str = "ERROR" if cliArgs.nolog else "INFO" 
-configPath:Path = Path(cliArgs.config) if cliArgs.config else Path.cwd() / "config.json"
-schedulePath:Path = Path(cliArgs.schedule) if cliArgs.schedule else Path.cwd() / "schedule.json"
-configPath = configPath.resolve()
-schedulePath = schedulePath.resolve()
+configPath:Path = (Path(cliArgs.config) if cliArgs.config else Path.cwd() / "config.json").resolve()
+schedulePath:Path = (Path(cliArgs.schedule) if cliArgs.schedule else Path.cwd() / "schedule.json").resolve()
+outputPath:Path = Path(cliArgs.output) if cliArgs.output else Path.cwd()
 
     
 logger.remove()    
@@ -96,7 +96,8 @@ config["name"] = (
 for i in trange(len(terms), desc="Total: "):
     ics = generateICS(terms[i], config)
     try:
-        with open(f"{config['name']} - {terms[i].name}.ics", "wb") as f:
+        outputPath = (outputPath / (f"{config['name']} - {terms[i].name}.ics")).resolve()
+        with open(outputPath, "wb") as f:
             f.write(ics)
     except Exception as e:
         logger.error(
