@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 # coding=utf-8
 
-import itertools
-import uuid
+import itertools, uuid
 import icalendar as ic
 from loguru import logger
 from datetime import datetime, time, timedelta
