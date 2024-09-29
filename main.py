@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # coding=utf-8
 
-import os
+import os,argparse
 from loguru import logger
 from tqdm import tqdm, trange
 from pathlib import Path
@@ -11,14 +11,29 @@ from data import Location, Term, Course, generateICS
 
 VERSION = "2.0"
 
-logger.remove()
-logger.add(lambda msg: tqdm.write(msg, end=""), format="{level}: <level>{message}</level>", level="INFO", colorize=True)
-logger.info(f"iSchedule {VERSION}")
+cliArgumentParser = argparse.ArgumentParser(description="iSchedule")
+cliArgumentParser.add_argument('-v', '--version',action="store_true", help='显示版本')
+cliArgumentParser.add_argument('-nl','--nolog',action="store_true", help='不显示警告与提示信息')
+cliArgumentParser.add_argument('-c','--config', type=str, help='配置文件路径')
+cliArgumentParser.add_argument('-s',"--schedule",type=str, help="JSON时间配置文件路径")
+cliArgs = cliArgumentParser.parse_args()
+
+if cliArgs.version:
+    print(f"iSchedule {VERSION}")
+    exit(0)
+
+logLevel:str = "ERROR" if cliArgs.nolog else "INFO" 
+configPath:Path = Path(cliArgs.config) if cliArgs.config else Path.cwd() / "config.json"
+schedulePath:Path = Path(cliArgs.schedule) if cliArgs.schedule else Path.cwd() / "schedule.json"
+
+    
+logger.remove()    
+logger.add(lambda msg: tqdm.write(msg, end=""), format="{level}: <level>{message}</level>", level=logLevel, colorize=True)
+logger.info(f"iSchedule {VERSION}")   
 
 # read files
-config: dict = loadJSON(Path.cwd() / "config.json")  # Program configuration
-schedulePath: Path = Path.cwd() / "schedule.json"
-if not os.path.exists(schedulePath):  
+config: dict = loadJSON(configPath.resolve())  # Program configuration
+if not os.path.exists(schedulePath.resolve()):  
     # schedule file with default file name is not found
     logger.warning(f"{schedulePath} does not exist")
     tmp: str = input("ENTER the schedule file path: ").strip()
