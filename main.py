@@ -90,7 +90,8 @@ for termName, termData in schedule.items():
                 name=holidayName,
                 type=holidayData["type"],
                 date=[datetime(*x) for x in holidayData["date"]],
-                compensation=holidayData["compensation"] if "compensation" in holidayData else None,)
+                compensation=[[datetime(*x[0]), x[1]] for x in holidayData["compensation"]] if holidayData.get("compensation") else None,
+            )
         )
 
 print("\n")

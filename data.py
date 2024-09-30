@@ -30,18 +30,19 @@ class Holiday:
     type: str
     start: datetime
     end: datetime
-    compensation: list
+    compensation: list[list[datetime, int]]
 
     def __init__(
         self,
         name: str,
         type: str,
         date: list[datetime],
-        compensation: list[list] | None,
+        compensation: list[list[datetime, int]] | None,
     ) -> None:
         self.name = name
         self.type = type
         self.compensation = compensation if compensation else []
+        print(self.compensation)
 
         if not 0 < len(date) <= 2:  # (0,2]
             logger.error(f"Invalid date list length: {len(date)}, should be 1 or 2")
@@ -317,6 +318,15 @@ def generateICS(term: Term, config: dict) -> bytes:
 
                                 ics.add_component(event)
                     cnt += 1
+            for holiday in term.holidays:
+                for compensation in holiday.compensation:
+                    for timestamp in timetable:
+                        if timestamp[0] == compensation[1]:
+                            event = course.eventify(
+                                term, compensation[0], timestamp[1], config["alarm"]
+                            )
+                            ics.add_component(event)
+
         # TODO: add compensations
 
     # Else, use rrule strategy to reduce the file size and increase the performance
