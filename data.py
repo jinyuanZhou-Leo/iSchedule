@@ -25,6 +25,39 @@ class Location:
             return f"[{self.name}]: ({self.latitude}, {self.longitude})"
 
 
+class Holiday:
+    name: str
+    type: str
+    start: datetime
+    end: datetime
+    compensation: list
+
+    def __init__(
+        self,
+        name: str,
+        type: str,
+        date: list[datetime],
+        compensation: list[list] | None,
+    ) -> None:
+        self.name = name
+        self.type = type
+        self.compensation = compensation if compensation else []
+
+        if not 0 < len(date) <= 2:  # (0,2]
+            logger.error(f"Invalid date list length: {len(date)}, should be 1 or 2")
+            exit(0)
+            # TODO: work around to see if there is a solution to resolve the error without exit the program
+        elif len(date) == 1:
+            date.append(date[0])
+
+        # if the holiday is a single-day holiday
+        # The start and end time of this holiday would be the same day
+        self.start, self.end = date[0], date[1]
+
+    def __str__(self) -> str:
+        return f"Holiday - {self.name}:\n   Type: {self.type}\n   Compensation: {self.compensation}"
+
+
 class Term:
     name: str
     uuid: str
@@ -34,6 +67,7 @@ class Term:
     timetable: list[list[int, int]]
     cycle: int
     courses: list["Course"]
+    holidays: list["Holiday"]
 
     def __init__(
         self,
@@ -58,11 +92,21 @@ class Term:
             self.cycle = cycle
 
         self.courses = []
+        self.holidays = []
         self.uuid = str(uuid.uuid4())
 
     def addCourse(self, course: "Course") -> None:
         course.setCycle(self.cycle)  # set the cycle number of the course instance
         self.courses.append(course)  # add course instance into the term instance
+
+    def addHoliday(self, holiday: Holiday) -> None:
+        self.holidays.append(holiday)
+
+    def isHoliday(self, date: datetime) -> bool:
+        for holiday in self.holidays:
+            if holiday.start <= date <= holiday.end:
+                return True
+        return False
 
     def __str__(self) -> str:
         return f"Term - {self.uuid}:\n   Name: {self.name}\n   Start: {self.start}\n   End: {self.end}\n   Class Duration: {self.duration} minutes\n   Timetable: {self.timetable}\n   Cycle: {self.cycle}"
@@ -193,9 +237,12 @@ class Course:
                     )
                 ]
             )
-        return mergeFirstItem(product)
+        # return mergeFirstItem(product)
+        return product
 
-    def eventify(self, term: Term, date: datetime, block: int) -> ic.Event:
+    def eventify(
+        self, term: Term, date: datetime, block: int, reminderSetting: dict
+    ) -> ic.Event:
         event: ic.Event = ic.Event()
         event.add("summary", self.name)
         event.add(
@@ -225,19 +272,23 @@ class Course:
         event.add("dtstamp", datetime.now())
         event.add("uid", uuid.uuid4())
 
+        if reminderSetting["enabled"] == True:
+            reminder: ic.Alarm = ic.Alarm()
+            reminder.add("ACTION", "DISPLAY")
+            reminder.add("DESCRIPTION", "提醒事项")
+            reminder.add(
+                "TRIGGER",
+                timedelta(
+                    hours=-reminderSetting["before"][0],
+                    minutes=-reminderSetting["before"][1],
+                ),
+            )
+            event.add_component(reminder)
+
         return event
 
 
-def getWeekInfo(day: int) -> list[int, int]:
-    fullWeek = day // 5 if day % 5 != 0 else day // 5 - 1
-    remain = day - fullWeek * 5
-    return [remain, fullWeek]
-
-
-def day2str(remain: int) -> str:
-    map: dict = {1: "MO", 2: "TU", 3: "WE", 4: "TH", 5: "FR"}
-    return map[remain]
-
+@timer
 def generateICS(term: Term, config: dict) -> bytes:
     ics: ic.Calendar = ic.Calendar()
     ics.add("VERSION", "2.0")
@@ -247,29 +298,42 @@ def generateICS(term: Term, config: dict) -> bytes:
     ics.add("X-WR-CALNAME", f"{config['name']} - {term.name}")
     ics.add("X-WR-TIMEZONE", "Asia/Shanghai")  # TODO: add time zone support
 
-    initDay: datetime = term.start - timedelta(days=term.start.weekday())
-    for course in term.courses:
-        timetable = course.getDecodedIndex(term)
-        for timestamp in timetable:
-            for day in timestamp[0]:
-                weekInfo: list[int, int] = getWeekInfo(day)
+    # If there are holidays, the rrule strategy is not gonna work effectively though
+    if term.holidays:
+        logger.debug("Using Date Range Strategy")
+        for course in term.courses:
+            cnt = 0  # day counter
+            timetable = course.getDecodedIndex(term)
+            for date in dateRange(term.start, term.end):
+                if date.weekday() < 5:
+                    if cnt >= course.getCycleDay():
+                        cnt = 0
+                    if not term.isHoliday(date):
+                        for timestamp in timetable:
+                            if timestamp[0] - 1 == cnt:
+                                event = course.eventify(
+                                    term, date, timestamp[1], config["alarm"]
+                                )
+
+                                ics.add_component(event)
+                    cnt += 1
+        # TODO: add compensations
+
+    # Else, use rrule strategy to reduce the file size and increase the performance
+    else:
+        logger.debug("Using RRule Strategy")
+        initDay: datetime = term.start - timedelta(days=term.start.weekday())
+        for course in term.courses:
+            timetable = course.getDecodedIndex(term)
+            for timestamp in timetable:
+                weekInfo: list[int, int] = getWeekInfo(timestamp[0])
                 event: ic.Event = course.eventify(
                     term,
                     initDay + timedelta(weeks=weekInfo[1], days=weekInfo[0] - 1),
                     timestamp[1],
+                    config["alarm"],
                 )
-                if config["alarm"]["enabled"] == True:
-                    reminder: ic.Alarm = ic.Alarm()
-                    reminder.add("ACTION", "DISPLAY")
-                    reminder.add("DESCRIPTION", "提醒事项")
-                    reminder.add(
-                        "TRIGGER",
-                        timedelta(
-                            hours=-config["alarm"]["before"][0],
-                            minutes=-config["alarm"]["before"][1],
-                        ),
-                    )
-                    event.add_component(reminder)
+
                 rrule = ic.vRecur(
                     freq="weekly",
                     interval=course.cycle,
