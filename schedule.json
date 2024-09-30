@@ -57,6 +57,14 @@
                 "index":[["odd",4],[[5,10],3]],
                 "location":"A308/Library"
             }
+        },
+        "holidays":{
+            "National Holiday":{
+                "type": "fixed",
+                "date":[[2024,10,1],[2024,10,7]],
+                "compensation":[[[2024,9,29],2]]
+            }
+            
         }
     }
 }
