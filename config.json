@@ -1,6 +1,6 @@
 {
     "name": "BCA25",
-    "color": "#80e24e",
+    "color": "#e2e24e",
     "alarm": {
         "enabled": true,
         "before": [0,7]
