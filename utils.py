@@ -5,6 +5,8 @@ import json, random, re, time
 import random
 import re
 import time
+from datetime import datetime, timedelta
+from typing import Generator
 from functools import wraps
 from pathlib import Path
 from loguru import logger
@@ -16,7 +18,26 @@ __all__ = [
     "parseHexColor",
     "extractJSONFromMarkdown",
     "timer",
+    "dateRange",
+    "getWeekInfo",
+    "day2str",
 ]
+
+
+def getWeekInfo(day: int) -> list[int, int]:
+    fullWeek = day // 5 if day % 5 != 0 else day // 5 - 1
+    remain = day - fullWeek * 5
+    return [remain, fullWeek]
+
+
+def day2str(remain: int) -> str:
+    map: dict = {1: "MO", 2: "TU", 3: "WE", 4: "TH", 5: "FR"}
+    return map[remain]
+
+
+def dateRange(start: datetime, end: datetime) -> Generator[datetime, None, None]:
+    for n in range(int((end - start).days) + 1):
+        yield start + timedelta(n)
 
 
 def timer(func):
@@ -25,7 +46,9 @@ def timer(func):
         start_time = time.time()
         result = func(*args, **kwargs)
         end_time = time.time()
-        print(f"{func.__name__} 函数执行耗时：{end_time - start_time:.8f} 秒")
+        logger.info(
+            f"{repr(func.__name__)} called, Time consumed {end_time - start_time:.6f}s"
+        )
         return result
 
     return wrapper
