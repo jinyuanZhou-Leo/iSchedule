@@ -7,7 +7,7 @@ from tqdm import tqdm, trange
 from pathlib import Path
 from datetime import datetime
 from utils import *
-from data import Location, Term, Course, generateICS
+from data import Location, Term, Course,Holiday, generateICS
 
 VERSION = "2.0"
 
@@ -43,7 +43,7 @@ if not os.path.exists(schedulePath):
     if (tmp.startswith("'") and tmp.endswith("'")) or (tmp.startswith('"') and tmp.endswith('"')):
         tmp = tmp[1:-1]  # remove quotes
     schedulePath = Path(tmp).resolve()
-schedule: dict = loadJSON(schedulePath)
+schedule: dict[dict] = loadJSON(schedulePath)
 
 # parse schedule file into objects
 terms: list[Term] = []
@@ -82,6 +82,15 @@ for termName, termData in schedule.items():
                 index = courseData["index"],
                 cycle = courseCycle,
             )
+        )
+    
+    for holidayName, holidayData in termData["holidays"].items():
+        tmp.addHoliday(
+            Holiday(
+                name=holidayName,
+                type=holidayData["type"],
+                date=[datetime(*x) for x in holidayData["date"]],
+                compensation=holidayData["compensation"] if "compensation" in holidayData else None,)
         )
 
 print("\n")
