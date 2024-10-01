@@ -284,8 +284,8 @@ def generateICS(term: Term, config: dict) -> bytes:
     if term.holidays:
         logger.debug("Using Date Range Strategy")
         for course in term.courses:
-            cnt = 0  # day counter
-            timetable = course.getDecodedIndex(term)
+            cnt: int = 0  # day counter
+            timetable: list[list[int]] = course.getDecodedIndex(term)
             for date in dateRange(term.start, term.end):
                 if date.weekday() < 5:
                     if cnt >= course.getCycleDay():
@@ -293,7 +293,7 @@ def generateICS(term: Term, config: dict) -> bytes:
                     if not term.isHoliday(date):
                         for timestamp in timetable:
                             if timestamp[0] - 1 == cnt:
-                                event = course.eventify(
+                                event: ic.Event = course.eventify(
                                     term, date, timestamp[1], config["alarm"]
                                 )
 
@@ -315,7 +315,7 @@ def generateICS(term: Term, config: dict) -> bytes:
         for course in term.courses:
             timetable = course.getDecodedIndex(term)
             for timestamp in timetable:
-                weekInfo: list[int, int] = getWeekInfo(timestamp[0])
+                weekInfo: list[int] = getWeekInfo(timestamp[0])
                 event: ic.Event = course.eventify(
                     term,
                     initDay + timedelta(weeks=weekInfo[1], days=weekInfo[0] - 1),
