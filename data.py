@@ -30,19 +30,18 @@ class Holiday:
     type: str
     start: datetime
     end: datetime
-    compensation: list[list[datetime, int]]
+    compensations: list[list[datetime, int]]
 
     def __init__(
         self,
         name: str,
         type: str,
         date: list[datetime],
-        compensation: list[list[datetime, int]] | None,
+        compensations: list[list[datetime, int]] | None,
     ) -> None:
         self.name = name
         self.type = type
-        self.compensation = compensation if compensation else []
-        print(self.compensation)
+        self.compensations = compensations if compensations else []
 
         if not 0 < len(date) <= 2:  # (0,2]
             logger.error(f"Invalid date list length: {len(date)}, should be 1 or 2")
@@ -56,7 +55,7 @@ class Holiday:
         self.start, self.end = date[0], date[1]
 
     def __str__(self) -> str:
-        return f"Holiday - {self.name}:\n   Type: {self.type}\n   Compensation: {self.compensation}"
+        return f"Holiday - {self.name}:\n   Type: {self.type}\n   Compensation: {self.compensations}"
 
 
 class Term:
@@ -205,24 +204,6 @@ class Course:
                 )
                 exit(0)
 
-        def mergeFirstItem(cartesian_product):
-            # 创建一个字典来存储合并后的结果
-            merged_result = {}
-
-            # 遍历笛卡尔积中的每个元素
-            for item in cartesian_product:
-                key, value = item
-                if value in merged_result:
-                    # 如果第二项已存在，则合并第一项
-                    merged_result[value].append(key)
-                else:
-                    # 如果第二项不存在，则创建新的键值对
-                    merged_result[value] = [key]
-
-            # 对每个列表中的第一项进行排序，并将结果转换为原始格式
-            result = [[sorted(keys), value] for value, keys in merged_result.items()]
-            return result
-
         product = []
         for timestamp in self.index:  # [1,2], ["odd",3]
             # 求decodeTimestamp笛卡尔积
@@ -319,15 +300,13 @@ def generateICS(term: Term, config: dict) -> bytes:
                                 ics.add_component(event)
                     cnt += 1
             for holiday in term.holidays:
-                for compensation in holiday.compensation:
+                for compensation in holiday.compensations:
                     for timestamp in timetable:
                         if timestamp[0] == compensation[1]:
                             event = course.eventify(
                                 term, compensation[0], timestamp[1], config["alarm"]
                             )
                             ics.add_component(event)
-
-        # TODO: add compensations
 
     # Else, use rrule strategy to reduce the file size and increase the performance
     else:
