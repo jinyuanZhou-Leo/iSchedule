@@ -30,9 +30,13 @@ def getWeekInfo(day: int) -> list[int, int]:
     return [remain, fullWeek]
 
 
-def day2str(remain: int) -> str:
+def day2str(day: int) -> str:
     map: dict = {1: "MO", 2: "TU", 3: "WE", 4: "TH", 5: "FR"}
-    return map[remain]
+    if 1 <= day <= 5:
+        return map[day]
+    else:
+        logger.critical(f"Invalid day: {day}")
+        exit(0)
 
 
 def dateRange(start: datetime, end: datetime) -> Generator[datetime, None, None]:

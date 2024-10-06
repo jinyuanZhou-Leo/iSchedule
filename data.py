@@ -36,19 +36,30 @@ class Holiday:
         self,
         name: str,
         type: str,
-        date: list[datetime],
+        date: list[datetime | int] | list[int | str],
         compensations: list[list[datetime, int]] | None,
     ) -> None:
         self.name = name
-        self.type = type
+        self.type = type.lower()
         self.compensations = compensations if compensations else []
+        if self.type == "fixed":
+            if not 0 < len(date) <= 2:  # (0,2]
+                logger.error(f"Invalid date list length: {len(date)}, should be 1 or 2")
+                exit(0)
+                # TODO: work around to see if there is a solution to resolve the error without exit the program
+            elif len(date) == 1:
+                date.append(date[0])
 
-        if not 0 < len(date) <= 2:  # (0,2]
-            logger.error(f"Invalid date list length: {len(date)}, should be 1 or 2")
+        elif self.type == "relative":
+            raise NotImplementedError("Relative holiday not implemented yet")
+            ordinal = date[0][:1]
+            weekNum = date[0][1:]
+
+        else:
+            logger.critical(
+                f"Invalid holiday type: {self.name}: type={repr(self.type)}. Holiday should either be 'fixed' or 'relative'."
+            )
             exit(0)
-            # TODO: work around to see if there is a solution to resolve the error without exit the program
-        elif len(date) == 1:
-            date.append(date[0])
 
         # if the holiday is a single-day holiday
         # The start and end time of this holiday would be the same day

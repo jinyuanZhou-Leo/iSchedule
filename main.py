@@ -70,7 +70,7 @@ for termName, termData in schedule.items():
             elif isinstance(courseData["location"], str):
                 courseLocation = Location(name=courseData["location"])
             else:
-                logger.warning(f"Empty location is provided in \"{termName}.{courseName}\"")
+                logger.warning(f"Invalid 'location' is provided in \"{termName}.{courseName}\"")
                 courseLocation = None
 
         tmp.addCourse(
