@@ -1,5 +1,5 @@
 <p align="center">
-  ![Logo](/img/icon.png)
+  <img src="/img/icon.png" alt="Logo" style="display: block; margin: 0 auto; width: 100px; height: 100px;" />
 </p>
 # iSchedule 课程表转ICS工具
 
