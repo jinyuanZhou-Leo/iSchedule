@@ -1,5 +1,5 @@
 
-<img src="img/icon.png" alt="示例图片" style="display:block;width: 150px;height:150px;margin:20px auto 40px auto;">
+<p align="center"><img src="img/icon.png" alt="示例图片" style="width: 150px;height:150px;margin:20px auto 40px auto;"></p>
 
 <div style="margin:10px auto 70px;"><h1 align="center">iSchedule: 课程表转ICS工具</h1></div>
 
