@@ -1,7 +1,9 @@
-<p align="center">
-  <img src="/img/icon.png" alt="Logo" style="display: block; margin: 0 auto; width: 100px; height: 100px;" />
-</p>
-# iSchedule 课程表转ICS工具
+<div style="text-align: center;width: 150px;height:150px;margin:20px auto 40px  auto">
+    <img src="img/icon.png" alt="示例图片">
+</div>
+
+<div style="margin:10px auto 70px;"><h1 align="center">iSchedule: 课程表转ICS工具</h1></div>
+
 
 ## 模块功能说明
 - **data.py:** 类
