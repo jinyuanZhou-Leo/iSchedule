@@ -1,3 +1,6 @@
+<p align="center">
+  ![Logo](/img/icon.png)
+</p>
 # iSchedule 课程表转ICS工具
 
 ## 模块功能说明
