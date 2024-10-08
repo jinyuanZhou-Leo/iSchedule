@@ -9,7 +9,7 @@
 - **main.py:** 主程序
 - **util.py:** 工具库
 - **json_generator.py:** json格式课程表生成器
-- **rule.md** Schedule.json格式Prompt
+- **rule.md** 关于Schedule.json格式的AI Prompt
 - **config.json:** ics生成配置
 - **schedule.json:** 课表样例
 
@@ -45,6 +45,10 @@
    * **类型**: `array of integers`
    * **含义**: 表示在事件开始前多少时间（单位可能为分钟或小时）提醒。数组中的每个元素代表一个提醒时间。
    * **示例**: `[0, 7]`（表示在事件开始时和开始前7分钟提醒）
+### countDayInHoliday
+   * **类型**: `boolean`
+   * **含义**: 表示是否在节假日中保持工作日计数
+   * **示例**: `true`
 
 ## Schedule.json 格式说明
 
