@@ -294,14 +294,17 @@ def generateICS(term: Term, config: dict) -> bytes:
     # If there are holidays, the rrule strategy is not gonna work effectively though
     if term.holidays:
         logger.debug("Using Date Range Strategy")
-        for course in term.courses:
+        for course in term.courses:  # iterate through all courses
             cnt: int = 0  # day counter
             timetable: list[list[int]] = course.getDecodedIndex(term)
-            for date in dateRange(term.start, term.end):
+            for date in dateRange(term.start, term.end):  # iterate through the term
                 if date.weekday() < 5:
+                    # if the day is a workday
                     if cnt >= course.getCycleDay():
+                        # if the day counter overflow, reset the counter
                         cnt = 0
                     if not term.isHoliday(date):
+                        # if the day is both a workday and non-holiday
                         for timestamp in timetable:
                             if timestamp[0] - 1 == cnt:
                                 event: ic.Event = course.eventify(
@@ -309,7 +312,11 @@ def generateICS(term: Term, config: dict) -> bytes:
                                 )
 
                                 ics.add_component(event)
-                    cnt += 1
+                        cnt += 1
+                    else:  # workday but holiday
+                        if config["countDayInHoliday"] == True:
+                            cnt += 1
+
             for holiday in term.holidays:
                 for compensation in holiday.compensations:
                     for timestamp in timetable:
@@ -333,7 +340,6 @@ def generateICS(term: Term, config: dict) -> bytes:
                     timestamp[1],
                     config["alarm"],
                 )
-
                 rrule = ic.vRecur(
                     freq="weekly",
                     interval=course.cycle,

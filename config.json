@@ -4,5 +4,6 @@
     "alarm": {
         "enabled": true,
         "before": [0,7]
-    }
+    },
+    "countDayInHoliday":false
 }
