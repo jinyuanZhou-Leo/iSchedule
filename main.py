@@ -17,6 +17,7 @@ cliArgumentParser.add_argument('-nl','--nolog',action="store_true", help='不显
 cliArgumentParser.add_argument('-c','--config', type=str, help='配置文件路径')
 cliArgumentParser.add_argument('-s',"--schedule",type=str, help="JSON时间配置文件路径")
 cliArgumentParser.add_argument('-o','--output', type=str, help='输出目录')
+
 cliArgs = cliArgumentParser.parse_args()
 
 if cliArgs.version:
@@ -26,7 +27,7 @@ if cliArgs.version:
 logLevel:str = "ERROR" if cliArgs.nolog else "INFO" 
 configPath:Path = (Path(cliArgs.config) if cliArgs.config else Path.cwd() / "config.json").resolve()
 schedulePath:Path = (Path(cliArgs.schedule) if cliArgs.schedule else Path.cwd() / "schedule.json").resolve()
-outputPath:Path = Path(cliArgs.output) if cliArgs.output else Path.cwd()
+outputPath:Path = (Path(cliArgs.output) if cliArgs.output else Path.cwd()).resolve()
 
     
 logger.remove()    
@@ -34,7 +35,7 @@ logger.add(lambda msg: tqdm.write(msg, end=""), format="{level}: <level>{message
 logger.info(f"iSchedule {VERSION}")   
 
 # read files
-config: dict = loadJSON(configPath)  # Program configuration
+config: dict = loadJSON(configPath)  # Program configurations
 if not os.path.exists(schedulePath):  
     # schedule file with default file name is not found
     logger.warning(f"{schedulePath} does not exist")

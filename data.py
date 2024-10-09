@@ -292,7 +292,15 @@ def generateICS(term: Term, config: dict) -> bytes:
     ics.add("X-WR-TIMEZONE", "Asia/Shanghai")  # TODO: add time zone support
 
     # If there are holidays, the rrule strategy is not gonna work effectively though
-    if term.holidays:
+    if (
+        term.holidays
+        or config["countDayInHoliday"] == False
+        or config["reduceFileSize"] == False
+    ):
+        if config["reduceFileSize"] == True:
+            logger.warning(
+                "Reduce file size mode DOES NOT support holiday and countDayInHoliday functions, attempt to process in normal mode instead..."
+            )
         logger.debug("Using Date Range Strategy")
         for course in term.courses:  # iterate through all courses
             cnt: int = 0  # day counter
@@ -328,6 +336,9 @@ def generateICS(term: Term, config: dict) -> bytes:
 
     # Else, use rrule strategy to reduce the file size and increase the performance
     else:
+        logger.warning(
+            "Tips - Reduce file size mode is enabled, some features may not supported"
+        )
         logger.debug("Using RRule Strategy")
         initDay: datetime = term.start - timedelta(days=term.start.weekday())
         for course in term.courses:
