@@ -9,7 +9,7 @@ from datetime import datetime
 from utils import *
 from data import Location, Term, Course,Holiday, generateICS
 
-VERSION = "2.2.1"
+VERSION = "2.2.2"
 
 cliArgumentParser = argparse.ArgumentParser(description="iSchedule")
 cliArgumentParser.add_argument('-v', '--version',action="store_true", help='显示版本')
@@ -29,7 +29,7 @@ configPath:Path = (Path(cliArgs.config) if cliArgs.config else Path.cwd() / "con
 schedulePath:Path = (Path(cliArgs.schedule) if cliArgs.schedule else Path.cwd() / "schedule.json").resolve()
 outputPath:Path = (Path(cliArgs.output) if cliArgs.output else Path.cwd()).resolve()
 
-    
+
 logger.remove()    
 logger.add(lambda msg: tqdm.write(msg, end=""), format="{level}: <level>{message}</level>", level=logLevel, colorize=True)
 logger.info(f"iSchedule {VERSION}")   

@@ -1,4 +1,4 @@
-icalendar==5.0.13
+icalendar==6.0.1
 loguru==0.7.2
 python-dotenv==1.0.1
 tqdm==4.66.5
