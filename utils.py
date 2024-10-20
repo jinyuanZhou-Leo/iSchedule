@@ -5,6 +5,8 @@ import json, random, re, time
 import random
 import re
 import time
+import requests
+from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 from typing import Generator
 from functools import wraps
@@ -21,6 +23,7 @@ __all__ = [
     "dateRange",
     "getWeekInfo",
     "day2str",
+    "setEnvVar",
 ]
 
 
@@ -165,6 +168,47 @@ def extractJSONFromMarkdown(markdown_text):
     pattern = re.compile(r"```json\n(.*?)```", re.DOTALL)
     matches = pattern.findall(markdown_text)
     return "".join(matches)
+
+
+def setEnvVar(key: str, value: str) -> None:
+    key = key.upper()
+    path = (Path.cwd() / ".env").resolve()
+    try:
+        with open(path, "r") as f:
+            env = f.readlines()
+    except IOError as e:
+        logger.critical(
+            f"{e}: Permission denied, Try re-run the program by using 'sudo'."
+        )
+        exit(0)
+    except Exception as e:
+        logger.critical(f"Unknown error occurred while parsing '{f}': {e}")
+        exit(0)
+
+    found = False
+    updatedEnv = []
+    for line in env:
+        if line.startswith(key + "="):
+            updatedEnv.append(f'{key}="{value}"\n')
+            found = True
+        else:
+            updatedEnv.append(line)
+
+    if not found:
+        updatedEnv.append(f'{key}="{value}"\n')
+
+    try:
+        with open(path, "w") as f:
+            f.writelines(updatedEnv)
+    except IOError as e:
+        logger.critical(
+            f"{e}: Permission denied, Try re-run the program by using 'sudo'."
+        )
+        exit(0)
+    except Exception as e:
+        logger.critical(f"Unknown error occurred while parsing '{f}': {e}")
+        exit(0)
+
 
 if __name__ == "__main__":
     logger.warning("This module cannot run independently")
