@@ -58,20 +58,8 @@ APIKEY: str | None = os.getenv("ZHIPU_API_KEY")
 if not APIKEY:
     logger.error('错误:未找到".env"配置文件')
     APIKEY = input("请输入智谱AI API_KEY以使用在线API推理: ").strip()
-    if not os.path.exists((Path.cwd() / ".env").resolve()):
-        try:
-            with open((Path.cwd() / ".env").resolve(), "w") as f:
-                f.write(f'ZHIPU_API_KEY="{APIKEY}"')
-        except IOError as e:
-            logger.critical(
-                f"{e}: Permission denied, Try re-run the program by using 'sudo'."
-            )
-            exit(0)
-        except Exception as e:
-            logger.critical(f"Unknown error occurred while parsing '{f}': {e}")
-            exit(0)
-        else:
-            logger.success('智谱AI API_KEY已成功写入".env"配置文件\n')
+    setEnvVar("APIKEY", APIKEY)
+    logger.success('智谱AI API_KEY已成功写入".env"配置文件\n')
 else:
     logger.success(
         f"成功读取ZHIPU_API_KEY: {APIKEY[:10]}...{APIKEY[40:]}"
