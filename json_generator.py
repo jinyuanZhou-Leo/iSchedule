@@ -69,6 +69,7 @@ try:
     client = ZhipuAI(api_key=APIKEY)
 except Exception as e:
     logger.critical(f"{e}: 请检查你的智谱AI API_KEY是否正确")
+    setEnvVar("APIKEY", "")
     exit(0)
 
 inferenceMode: str = input(
