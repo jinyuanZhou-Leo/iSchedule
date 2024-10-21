@@ -1,6 +1,8 @@
+#!/usr/bin/env python3
+# coding=utf-8
+
 import requests
 from loguru import logger
-
 
 class RequestHandler:
     def __init__(self, timeout: int = 10, retry: int = 3, headers: dict = {}) -> None:
@@ -27,6 +29,9 @@ class RequestHandler:
     def _sendRequest(self, method, url: str, **kwargs) -> requests.Response | None:
         for attemps in range(self.retry):
             try:
+                logger.debug(
+                    f"{(method.__name__).upper()} - {url} with **kwargs: {kwargs}"
+                )
                 response = method(
                     url, timeout=self.timeout, headers=self.headers, **kwargs
                 )
@@ -53,3 +58,7 @@ class RequestHandler:
 
     def delete(self, url: str, **kwargs) -> requests.Response:
         return self._sendRequest(requests.delete, url, **kwargs)
+
+
+if __name__ == "__main__":
+    logger.warning("This module cannot run independently")
