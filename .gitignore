@@ -1,6 +1,7 @@
 *.env
 *.code-workspace
 *.ics
+*.log
 .DS_Store
 *.spec
 .pipreqs
