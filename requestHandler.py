@@ -30,7 +30,7 @@ class RequestHandler:
     def _sendRequest(self, method: str, url: str, **kwargs) -> requests.Response | None:
         for attempts in range(self.retry):
             try:
-                logger.debug(f"{method.upper()} - {url} with **kwargs: {kwargs}")
+                logger.debug(f"{method} - {url} with **kwargs: {kwargs}")
                 response = self.session.request(
                     method=method,
                     url=url,
@@ -40,11 +40,11 @@ class RequestHandler:
                 )
                 # response = method(url, timeout=self.timeout, headers=self.headers, **kwargs)
                 response.raise_for_status()
-                logger.success(f"Successfully {method.upper()}: {url}")
+                logger.success(f"Successfully {method}: {url}")
                 return response
             except Exception as e:
                 logger.warning(
-                    f"{method.upper()} failed (Attempt:[{attempts+1}/{self.retry}]): {e}"
+                    f"{method} failed (Attempt:[{attempts+1}/{self.retry}]): {e}"
                 )
                 if attempts + 1 == self.retry:
                     self._handle_error(e)
