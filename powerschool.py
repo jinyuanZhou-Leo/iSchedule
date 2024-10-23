@@ -48,9 +48,10 @@ class PowerSchool:
             else:
                 return True
 
-        progressbar = tqdm(desc="Logging in Powerschool", unit="%", total=100)
+        progressbar = tqdm(desc="Logging into Powerschool", unit="%", total=100)  # TODO: enhance description
         languageSetting = locale.getlocale()[0]
-        if languageSetting != "zh_CN" or languageSetting != "en_US":
+        logger.debug(f"System language: {languageSetting}")
+        if languageSetting != "zh_CN" and languageSetting != "en_US":
             logger.warning("Default system language is unsupported, using English as default...")
             languageSetting = "en_US"
 
