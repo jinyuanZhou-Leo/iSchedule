@@ -3,6 +3,7 @@
 
 import itertools
 import re
+from tracemalloc import start
 import requests
 from requestHandler import RequestHandler
 from bs4 import BeautifulSoup, ResultSet, SoupStrainer, Tag
@@ -75,7 +76,8 @@ class PowerSchool:
         else:
             raise ValueError("Wrong username or password")
 
-    def ps2list(self, psIndex: str | list, cycle: int) -> list[list]:
+    @staticmethod
+    def ps2list(psIndex: str | list, cycle: int) -> list[list]:
         def componentParser(component: str) -> list:
             # pre-processing
             abbrDict = {
@@ -152,7 +154,9 @@ class PowerSchool:
                 parsedComponent.extend(
                     [
                         list(t)
-                        for t in itertools.product(componentParser(component), [block])
+                        for t in itertools.product(
+                            componentParser(component), [block - 1]
+                        )
                     ]
                 )
 
@@ -257,7 +261,7 @@ class PowerSchool:
             tCell.find("a", {"target": "_top"}).get_text().removeprefix("Email").strip()
         )
         if courseName and courseLocation and courseTeacher:
-            courseLocation.replace("，", ", ")
+            courseLocation.replace("，", ", ")  # TODO: work around: this doesn't work
             # replace chinese comma with English comma
             course: dict[dict] = {}
             courseData: dict = {"location": courseLocation, "teacher": courseTeacher}
@@ -282,30 +286,48 @@ class PowerSchool:
             courseName = list(courseInformation.keys())[0]
             if courseName == "BCA Homeroom":
                 # ignore BCA Homeroom
-                logger.warning("Skipping BCA Homeroom")
+                logger.warning(f"Skip {courseName} while parsing course information")
                 continue
             courseInformation[courseName]["index"] = (
                 tData[columnMap["TimeIndex"]].get_text().strip()
             )
             course.update(courseInformation)
-        # TODO: check
-        print(course)
+        logger.debug(f'All course information is parsed, result: "{course}"')
         return course
 
     def getTimetable(self) -> list[list]:
-        # TODO: implement
-        print("AAAAAA")
-        print(self.schedulePageContent.prettify())
+
+        def timeParser(timestamp: str) -> list:
+            # TODO: English Version support
+            tmp = timestamp.split("-")[0].strip().split(" ")
+            startingTime, apm = tmp[0], tmp[1]
+            startingTime = [int(i) for i in startingTime.split(":")]
+            if apm == "下午":
+                startingTime[0] += 12
+
+            if 0 <= startingTime[0] <= 24 and 0 <= startingTime[1] < 60:
+                return startingTime
+            else:
+                raise ValueError(f'Unexpected invalid timestamp: "{timestamp}"')
+
         scheduleTbody: Tag = self.schedulePageContent.select_one(
             "#tableStudentSchedMatrix"
         )
         matrixItemsFilter = re.compile(r"scheduleClass\d+")
-        matrixItems = [
-            item.text for item in scheduleTbody.find_all("td", class_=matrixItemsFilter)
-        ]
-        matrixItems = set(matrixItems)
-        return None
-        raise NotImplementedError("Get timetable is not implemented")
+
+        matrixItems = set()
+        for item in scheduleTbody.find_all("td", class_=matrixItemsFilter):
+            content: list = item.contents
+            courseName: str = content[0].strip()
+            if courseName == "BCA Homeroom":
+                logger.debug(f"Skip {courseName} while parsing timestamp")
+                # skipped
+                continue
+
+            matrixItems.add(item.contents[-1])
+        matrixItems = sorted([timeParser(item) for item in list(matrixItems)])
+        logger.debug(f'Timetable parsed, result: "{matrixItems}"')
+        return matrixItems
 
     def getScheduleJsonContent(
         self,
@@ -353,7 +375,7 @@ class PowerSchool:
                 "duration": duration,
                 "timetable": self.getTimetable(),
                 "cycle": cycle,
-                "course": self.getAllCourseInformation(),
+                "courses": self.getAllCourseInformation(),
             }
         }
         scheduleJson.update(termSettings)
