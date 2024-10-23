@@ -11,7 +11,7 @@ class RequestHandler:
         self.headers = headers
         self.session = requests.Session()
 
-    def _handle_error(self, error):
+    def _handle_error(self, error) -> None:
         if isinstance(error, requests.exceptions.HTTPError):
             logger.critical(f"HTTP Error - {error}")
         elif isinstance(error, requests.exceptions.ConnectionError):
