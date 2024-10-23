@@ -4,8 +4,6 @@
 import itertools
 import re
 import locale
-from tracemalloc import start
-from click import progressbar
 import requests
 from requestHandler import RequestHandler
 from bs4 import BeautifulSoup, ResultSet, SoupStrainer, Tag
@@ -37,7 +35,6 @@ class PowerSchool:
             self.password = password
 
     def _login(self, username: str, password: str):
-        # TODO: Add English Login Support
         def isLogin(psPage: requests.Response) -> bool:
             psPageContent = BeautifulSoup(psPage.content, self.htmlParser)
             if (
@@ -224,10 +221,10 @@ class PowerSchool:
             elif content.startswith("S") and content[-1].isdigit():
                 logger.debug(f'Found "{content}" in col {colCnt}')
                 colMap[f"Term{content[-1]}"] = colCnt
-            elif content == "缺勤":  # TODO: Eng Support
+            elif content == "缺勤" or content == "Absences":
                 logger.debug(f'Found "{content}" in col {colCnt}')
                 colMap["Absent"] = colCnt
-            elif content == "迟到":  # TODO: Eng Support
+            elif content == "迟到" or content == "Tardies":
                 logger.debug(f'Found "{content}" in col {colCnt}')
                 colMap["Tardy"] = colCnt
             else:
@@ -330,11 +327,10 @@ class PowerSchool:
     def getTimetable(self) -> list[list]:
 
         def timeParser(timestamp: str) -> list:
-            # TODO: English Version support
             tmp = timestamp.split("-")[0].strip().split(" ")
             startingTime, apm = tmp[0], tmp[1]
             startingTime = [int(i) for i in startingTime.split(":")]
-            if apm == "下午":
+            if apm == "下午" or apm == "PM":
                 startingTime[0] += 12
 
             if 0 <= startingTime[0] <= 24 and 0 <= startingTime[1] < 60:
