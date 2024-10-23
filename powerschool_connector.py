@@ -3,6 +3,7 @@
 
 import os
 import json
+import sys
 from powerschool import PowerSchool
 from utils import *
 from pathlib import Path
@@ -12,8 +13,9 @@ from tqdm import tqdm, trange
 
 
 logger.remove()
+# lambda msg: tqdm.write(msg, end="")
 logger.add(
-    lambda msg: tqdm.write(msg, end=""),
+    sys.stdout,
     level="DEBUG",
     colorize=True,
 )
@@ -67,9 +69,14 @@ for attempt in range(MAX_ATTEMPTS):
         logger.success("Login to Powerschool successfully")
         break
 
-scheduleJson = powerschool.getSchedule()
-with open(Path.cwd() / "schedule.json", "w", encoding="utf-8") as f:
-    f.write(json.dumps(scheduleJson, ensure_ascii=False))
+try:
+    scheduleJson = powerschool.getScheduleJsonContent()
+except Exception as e:
+    logger.critical(f"Failed to get schedule: {e}")
+    exit(3)
+
+with open(Path.cwd() / "schedule2.json", "w", encoding="utf-8") as f:
+    f.write(json.dumps(scheduleJson, ensure_ascii=False, indent=4))
 
 logger.success(
     'Schedule is generated successfully, please check the "schedule.json" in current directory'

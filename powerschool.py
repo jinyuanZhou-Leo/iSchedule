@@ -2,9 +2,10 @@
 # coding=utf-8
 
 import itertools
+import re
 import requests
 from requestHandler import RequestHandler
-from bs4 import BeautifulSoup, ResultSet, Tag
+from bs4 import BeautifulSoup, ResultSet, SoupStrainer, Tag
 from loguru import logger
 
 
@@ -13,14 +14,16 @@ class PowerSchool:
     password: str
     htmlParser: str
     mode: str
-    content: BeautifulSoup | None
+    gradePageContent: BeautifulSoup | None
+    schedulePageContent: BeautifulSoup | None
 
     def __init__(
         self, username: str, password: str, htmlParser: str = "lxml", mode="request"
     ) -> None:
         self.htmlParser = htmlParser
         self.mode = mode
-        self.content = None  # init
+        self.gradePageContent = None  # init
+        self.schedulePageContent = None  # init
         try:
             self._login(username, password)
         except Exception as e:
@@ -33,7 +36,6 @@ class PowerSchool:
         # TODO: Add English Login Support
         def isLogin(psPage: requests.Response) -> bool:
             psPageContent = BeautifulSoup(psPage.content, self.htmlParser)
-            # print(psPageContent.prettify())
             if (
                 "pslogin" in psPageContent.body["class"]
                 and psPageContent.body["id"] == "pslogin"
@@ -50,6 +52,7 @@ class PowerSchool:
             },
         )
         LOGIN_URL = "https://nanjing.powerschool.com/guardian/home.html"
+        SCHEDULE_URL = "https://nanjing.powerschool.com/guardian/myschedule.html"
         PSLOGINDATA = {
             "dbpw": password,
             "serviceName": "PS Parent Portal",
@@ -61,8 +64,13 @@ class PowerSchool:
         }
         logger.info("Connecting to Powerschool...")
         psPage = requester.post(LOGIN_URL, data=PSLOGINDATA)
+        schedulePage = requester.get(SCHEDULE_URL)
+        schedulePageFilter = SoupStrainer(["tr", "td", "th", "table", "tbody", "br"])
+        self.schedulePageContent = BeautifulSoup(
+            schedulePage.content, self.htmlParser, parse_only=schedulePageFilter
+        )
         if isLogin(psPage):
-            self.content = BeautifulSoup(psPage.content, "lxml")
+            self.gradePageContent = BeautifulSoup(psPage.content, "lxml")
             return True
         else:
             raise ValueError("Wrong username or password")
@@ -154,7 +162,7 @@ class PowerSchool:
         return parsedIndex
 
     def _getGradeTable(self) -> Tag:
-        return self.content.select_one("table.linkDescList.grid")
+        return self.gradePageContent.select_one("table.linkDescList.grid")
 
     def _getGradeTableHeader(self) -> ResultSet[Tag]:
         return (
@@ -219,6 +227,8 @@ class PowerSchool:
     def _requestValue(
         self, prompt: str, type_: type, defaultValue: any = None, unit: str = ""
     ) -> any:
+        if unit:
+            unit = " " + unit
         while True:
             try:
                 inputValue = input(f"({defaultValue}{unit}) {prompt}: ").strip()
@@ -237,22 +247,28 @@ class PowerSchool:
     def _getCourseInformation(self, tCell: Tag) -> dict[str, str]:
         tData = [item for item in tCell.get_text().split("\xa0") if item != "\xa0"]
         # /xa0 represents the &nbsp; in HTML
-        courseName = tData[0].strip()
-        courseLocation = (
+        courseName: str = tData[0].strip()
+        courseLocation: str = (
             tCell.find("span", text="-\xa0Rm:")
             .find_next_sibling("span")
             .get_text(strip=True)
         )
-        courseTeacher = (
+        courseTeacher: str = (
             tCell.find("a", {"target": "_top"}).get_text().removeprefix("Email").strip()
         )
+        if courseName and courseLocation and courseTeacher:
+            courseLocation.replace("，", ", ")
+            # replace chinese comma with English comma
+            course: dict[dict] = {}
+            courseData: dict = {"location": courseLocation, "teacher": courseTeacher}
+            course[courseName] = courseData
+            return course
+        else:
+            raise RuntimeError(
+                "Unexpected error occur while finding course information"
+            )
 
-        course: dict[dict] = {}
-        courseData: dict = {"location": courseLocation, "teacher": courseTeacher}
-        course[courseName] = courseData
-        return course
-
-    def getCourseInformation(self) -> dict[any, dict]:
+    def getAllCourseInformation(self) -> dict[any, dict]:
         gradeTableHeader = self._getGradeTableHeader()  # list of table headers
         gradeTableContent = self._getGradeTableContent()  # list of table content
         columnMap = self._getGradeTableColumnMap(gradeTableHeader)
@@ -263,17 +279,35 @@ class PowerSchool:
             courseInformation: dict = self._getCourseInformation(
                 tData[columnMap["CourseInformation"]]
             )
-            courseInformation["index"] = (
+            courseName = list(courseInformation.keys())[0]
+            if courseName == "BCA Homeroom":
+                # ignore BCA Homeroom
+                logger.warning("Skipping BCA Homeroom")
+                continue
+            courseInformation[courseName]["index"] = (
                 tData[columnMap["TimeIndex"]].get_text().strip()
             )
             course.update(courseInformation)
-
+        # TODO: check
+        print(course)
         return course
 
     def getTimetable(self) -> list[list]:
-        raise NotImplementedError()
+        # TODO: implement
+        print("AAAAAA")
+        print(self.schedulePageContent.prettify())
+        scheduleTbody: Tag = self.schedulePageContent.select_one(
+            "#tableStudentSchedMatrix"
+        )
+        matrixItemsFilter = re.compile(r"scheduleClass\d+")
+        matrixItems = [
+            item.text for item in scheduleTbody.find_all("td", class_=matrixItemsFilter)
+        ]
+        matrixItems = set(matrixItems)
+        return None
+        raise NotImplementedError("Get timetable is not implemented")
 
-    def getSchedule(
+    def getScheduleJsonContent(
         self,
     ) -> dict[any, dict]:
         scheduleJson: dict = {}
@@ -282,18 +316,35 @@ class PowerSchool:
         logger.info("Press ENTER for using default setting")
 
         termName: str = self._requestValue("Term Name", str, defaultValue="Term")
-        termStart: list = self._requestValue(
-            f'"{termName}" start at (YY.mm.dd)', str
-        ).split(".")
-        termEnd: list = self._requestValue(
-            f'"{termName}" end at (YY.mm.dd)', str
-        ).split(".")
+        termStart: list = [
+            int(item)
+            for item in self._requestValue(
+                f'"{termName}" start at (YY.mm.dd)', str
+            ).split(".")
+        ]
+        termEnd: list = [
+            int(item)
+            for item in self._requestValue(
+                f'"{termName}" end at (YY.mm.dd)', str
+            ).split(".")
+        ]
+
         duration: int = self._requestValue(
             "Duration for each class", int, defaultValue=70, unit="minutes"
         )
         cycle: int = self._requestValue(
             "How many weeks per cycle", int, defaultValue=2, unit="week"
         )
+
+        # input validation checking
+        if len(termStart) != 3 or len(termEnd) != 3:
+            raise ValueError("Invalid date value")
+        if termStart >= termEnd:
+            raise ValueError("Start date must earlier than end date")
+        if cycle > 2:
+            logger.warning(
+                f'The cycle number seems rare: "cycle={cycle}", do you mean {cycle*7} days or {cycle*5} workdays? If you KNOW what you are doing, please ignore this warning'
+            )
 
         termSettings: dict[any, dict] = {
             termName: {
@@ -302,7 +353,7 @@ class PowerSchool:
                 "duration": duration,
                 "timetable": self.getTimetable(),
                 "cycle": cycle,
-                "course": self.getCourseInformation(),
+                "course": self.getAllCourseInformation(),
             }
         }
         scheduleJson.update(termSettings)
