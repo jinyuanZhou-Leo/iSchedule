@@ -9,7 +9,7 @@ from datetime import datetime
 from utils import *
 from data import Location, Term, Course,Holiday, generateICS
 
-VERSION = "2.2.2"
+VERSION = "3.0.0"
 
 cliArgumentParser = argparse.ArgumentParser(description="iSchedule")
 cliArgumentParser.add_argument('-v', '--version',action="store_true", help='显示版本')
@@ -63,7 +63,7 @@ for termName, termData in schedule.items():
         courseLocation:str| Location | None
         if courseData.get("cycle") is not None:
             logger.warning(f"Exceptional cycle \"{courseData["cycle"]}\" is provided in \"{termName}.{courseName}\" and this will OVERRIDE the default cycle. If you see this warning UNKNOWINGLY, please remove the \"cycle\" field under \"{termName}.courses.{courseName}\"")
-            
+
             courseCycle = int(courseData["cycle"])
         if courseData.get("location"):
             if isinstance(courseData["location"], tuple) or isinstance(courseData["location"], list):
@@ -83,16 +83,21 @@ for termName, termData in schedule.items():
                 cycle = courseCycle,
             )
         )
-    
-    for holidayName, holidayData in termData["holidays"].items():
-        tmp.addHoliday(
-            Holiday(
-                name=holidayName,
-                type=holidayData["type"],
-                date=[datetime(*x) for x in holidayData["date"]],
-                compensations=[[datetime(*x[0]), x[1]] for x in holidayData["compensation"]] if holidayData.get("compensation") else None,
+
+    if termData.get("holidays") is not None:
+        for holidayName, holidayData in termData["holidays"].items():
+            tmp.addHoliday(
+                Holiday(
+                    name=holidayName,
+                    type=holidayData["type"],
+                    date=[datetime(*x) for x in holidayData["date"]],
+                    compensations=(
+                        [[datetime(*x[0]), x[1]] for x in holidayData["compensation"]]
+                        if holidayData.get("compensation")
+                        else None
+                    ),
+                )
             )
-        )
 
 print("\n")
 
