@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # coding=utf-8
 
+import re
 import itertools, uuid, pytz
 import icalendar as ic
 from loguru import logger
@@ -45,8 +46,7 @@ class Holiday:
         self.compensations = compensations if compensations else []
         if self.type == "fixed":
             if not 0 < len(date) <= 2:  # (0,2]
-                logger.error(f"Invalid date list length: {len(date)}, should be 1 or 2")
-                exit(0)
+                raise ValueError(f"Invalid date list length: {len(date)}, should be 1 or 2")
                 # TODO: work around to see if there is a solution to resolve the error without exit the program
             elif len(date) == 1:
                 date.append(date[0])
@@ -57,10 +57,9 @@ class Holiday:
             weekNum = date[0][1:]
 
         else:
-            logger.critical(
+            raise ValueError(
                 f"Invalid holiday type: {self.name}: type={repr(self.type)}. Holiday should either be 'fixed' or 'relative'."
             )
-            exit(0)
 
         # if the holiday is a single-day holiday
         # The start and end time of this holiday would be the same day
@@ -96,10 +95,9 @@ class Term:
         self.timetable = timetable
 
         if cycle <= 0 or not isinstance(cycle, int):
-            logger.critical(
+            raise ValueError(
                 f'Invalid global cycle number "{cycle}" for "{self.name}", global cycle number should be positive integer'
             )
-            exit(0)
         else:
             self.cycle = cycle
 
@@ -159,7 +157,7 @@ class Course:
         return self.cycle * 5
 
     def getDecodedIndex(self, term: Term) -> list[list[int]]:
-        if isinstance(self.index, list):
+        if isinstance(self.index[0], list):
             logger.debug("Using traditional index decoder")
             return self._traditionalDecoder(term)
         else:
@@ -167,13 +165,10 @@ class Course:
             return PowerSchool.ps2list(self.index, self.getCycleDay())
 
     def _traditionalDecoder(self, term: Term) -> list[list[int]]:
-
+        logger.warning("Traditional format is deprecated, it will be removed in future releases")
         def decode_component(component: list | str | int, maximum: int):
             """
             Decode a component of a schedule.
-
-            This function decodes a given component into a list of corresponding numbers based on the predefined dictionary.
-            The component can be an integer, a string abbreviation, or a list containing integers and string abbreviations.
 
             Parameters:
             - component: The component to be decoded, can be an integer, a string, or a list.
@@ -192,10 +187,9 @@ class Course:
             # If the component is an integer, check if it is within the valid range
             if isinstance(component, int):
                 if component > self.getCycleDay() or component < 1:
-                    logger.critical(
+                    raise ValueError(
                         f'Invalid schedule file, Error processing "{term.name}.{self.name}.time", {component} is out of range'
                     )
-                    exit(0)
                 return [component]
 
             # If the component is a string abbreviation, convert it to the corresponding number list
@@ -211,36 +205,29 @@ class Course:
                     elif isinstance(item, str):
                         tmp.extend(abbrDict[item.lower()])
                     else:
-                        logger.critical(
+                        raise ValueError(
                             f"Invalid schedule file, Error processing {term.name}.{self.name}.time, {item} can not be indentified"
                         )
-                        exit(0)
                 return tmp
 
             # If the component is of an unsupported type, output an error message and exit
             else:
-                logger.critical(
+                raise ValueError(
                     f"Invalid schedule file, Error processing {term.name}.{self.name}.time, {component} can not be indentified"
                 )
-                exit(0)
 
-        product = []
-        for timestamp in self.index:  # [1,2], ["odd",3]
-            # 求decodeTimestamp笛卡尔积
+        product: list = []
+        for timestamp in self.index:  # 求decodeTimestamp笛卡尔积
             product.extend(
                 [
                     list(t)
                     for t in itertools.product(
                         [x for x in decode_component(timestamp[0], self.cycle * 5)],
-                        [
-                            x - 1
-                            for x in decode_component(timestamp[1], len(term.timetable))
-                        ],
+                        [x - 1 for x in decode_component(timestamp[1], len(term.timetable))],
                     )
                 ]
             )
-        # return mergeFirstItem(product)
-        print(product)
+
         return product
 
     def eventify(
@@ -301,12 +288,15 @@ def generateICS(term: Term, config: dict) -> bytes:
     ics.add("X-WR-CALNAME", f"{config['name']} - {term.name}")
     ics.add("X-WR-TIMEZONE", "Asia/Shanghai")  # TODO: add time zone support
 
+    def isRruleAvailable() -> bool:
+        if term.holidays:
+            return True
+        else:
+            if config.get("reduceFileSize") == False:
+                return False
+
     # If there are holidays, the rrule strategy is not gonna work effectively though
-    if (
-        term.holidays
-        or config.get("countDayInHoliday") == True
-        or config.get("reduceFileSize") == False
-    ):
+    if isRruleAvailable():
         if config.get("reduceFileSize") == True:
             logger.warning(
                 "Reduce file size mode DOES NOT support holiday and countDayInHoliday functions, attempt to process in normal mode instead..."
@@ -316,13 +306,10 @@ def generateICS(term: Term, config: dict) -> bytes:
             cnt: int = 0  # day counter
             timetable: list[list[int]] = course.getDecodedIndex(term)
             for date in dateRange(term.start, term.end):  # iterate through the term
-                if date.weekday() < 5:
-                    # if the day is a workday
-                    if cnt >= course.getCycleDay():
-                        # if the day counter overflow, reset the counter
+                if date.weekday() < 5:  # if the day is a workday
+                    if cnt >= course.getCycleDay():  # if the day counter overflow, reset the counter
                         cnt = 0
-                    if not term.isHoliday(date):
-                        # if the day is both a workday and non-holiday
+                    if not term.isHoliday(date):  # if the day is both a workday and non-holiday
                         for timestamp in timetable:
                             if timestamp[0] - 1 == cnt:
                                 event: ic.Event = course.eventify(
@@ -350,7 +337,12 @@ def generateICS(term: Term, config: dict) -> bytes:
             "Tips - Reduce file size mode is enabled, some features may not supported"
         )
         logger.debug("Using RRule Strategy")
-        initDay: datetime = term.start - timedelta(days=term.start.weekday())
+        if term.start.weekday() < 5:
+            # 如果用户输入的起始日期是工作日，则rrule从 该周 周一起算
+            initDay: datetime = term.start - timedelta(days=term.start.weekday())
+        else:
+            # 如果用户输入的起始日期是双休日，则rrule从 下周 周一起算
+            initDay: datetime = term.start + timedelta(days=(7 - term.start.weekday()))
         for course in term.courses:
             timetable = course.getDecodedIndex(term)
             for timestamp in timetable:
