@@ -26,7 +26,7 @@ if cliArgs.version:
 
 logLevel:str = "ERROR" if cliArgs.nolog else "INFO" 
 configPath:Path = (Path(cliArgs.config) if cliArgs.config else Path.cwd() / "config.json").resolve()
-schedulePath:Path = (Path(cliArgs.schedule) if cliArgs.schedule else Path.cwd() / "schedule.json").resolve()
+schedulePath: Path = (Path(cliArgs.schedule) if cliArgs.schedule else Path.cwd() / "schedule.json").resolve()
 outputPath:Path = (Path(cliArgs.output) if cliArgs.output else Path.cwd()).resolve()
 
 
@@ -110,20 +110,13 @@ config["name"] = (
 
 
 for i in trange(len(terms), desc="Total: "):
-    ics = generateICS(terms[i], config)
     try:
+        ics = generateICS(terms[i], config)
         outputPath = (outputPath / (f"{config['name']} - {terms[i].name}.ics")).resolve()
         with open(outputPath, "wb") as f:
             f.write(ics)
     except Exception as e:
-        logger.error(
-            f"[{i+1} of {len(terms)}] Failed to generate ICS file - {config["name"]} - {terms[i].name}.ics"
-        )
-        if isinstance(e,IOError):
-            logger.critical(f"{e}: Permission denied, Try re-run the program by using 'sudo'.")
-        else:
-            logger.critical(f"Unknown error occurred while creating file.")
-        exit(0)
+        logger.error(f"[{i+1} of {len(terms)}] Failed to generate ICS file - {config["name"]} - {terms[i].name}.ics")
     else:
         logger.success(
             f"[{i+1} of {len(terms)}] Successfully generated ICS file - {config["name"]} - {terms[i].name}.ics"
