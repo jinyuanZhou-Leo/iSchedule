@@ -3,11 +3,14 @@
 
 import itertools
 import re
+import locale
 from tracemalloc import start
+from click import progressbar
 import requests
 from requestHandler import RequestHandler
 from bs4 import BeautifulSoup, ResultSet, SoupStrainer, Tag
 from loguru import logger
+from tqdm import tqdm
 
 
 class PowerSchool:
@@ -45,6 +48,12 @@ class PowerSchool:
             else:
                 return True
 
+        progressbar = tqdm(desc="Logging in Powerschool", unit="%", total=100)
+        languageSetting = locale.getlocale()[0]
+        if languageSetting != "zh_CN" or languageSetting != "en_US":
+            logger.warning("Default system language is unsupported, using English as default...")
+            languageSetting = "en_US"
+
         requester = RequestHandler(
             timeout=10,
             retry=3,
@@ -59,17 +68,21 @@ class PowerSchool:
             "serviceName": "PS Parent Portal",
             "pcasServerUrl": "/",
             "credentialType": "User Id and Password Credential",
-            "request_locale": "zh_CN",
+            "request_locale": languageSetting,
             "account": username,
             "pw": password,
         }
+        progressbar.update(10)
         logger.info("Connecting to Powerschool...")
         psPage = requester.post(LOGIN_URL, data=PSLOGINDATA)
+        progressbar.update(30)
         schedulePage = requester.get(SCHEDULE_URL)
+        progressbar.update(30)
         schedulePageFilter = SoupStrainer(["tr", "td", "th", "table", "tbody", "br"])
         self.schedulePageContent = BeautifulSoup(
             schedulePage.content, self.htmlParser, parse_only=schedulePageFilter
         )
+        progressbar.update(30)
         if isLogin(psPage):
             self.gradePageContent = BeautifulSoup(psPage.content, "lxml")
             return True
@@ -284,14 +297,32 @@ class PowerSchool:
                 tData[columnMap["CourseInformation"]]
             )
             courseName = list(courseInformation.keys())[0]
-            if courseName == "BCA Homeroom":
-                # ignore BCA Homeroom
+            if courseName == "BCA Homeroom":  # ignore BCA Homeroom
                 logger.warning(f"Skip {courseName} while parsing course information")
                 continue
-            courseInformation[courseName]["index"] = (
-                tData[columnMap["TimeIndex"]].get_text().strip()
-            )
-            course.update(courseInformation)
+            courseInformation[courseName]["index"] = [tData[columnMap["TimeIndex"]].get_text().strip()]
+
+            if course.get(courseName) is not None:  # if there is duplicate course with different information, merge it
+                logger.debug(f"Duplicate course name: {courseName}, trying to merge content")
+
+                # merge time index
+                if course[courseName]["index"] != courseInformation[courseName]["index"]:
+                    logger.debug(f'Merging time index for "{courseName}"')
+                    course[courseName]["index"].extend(courseInformation[courseName]["index"])
+
+                # merge location
+                if course[courseName]["location"] != courseInformation[courseName]["location"]:
+                    logger.debug(f'Merging location information for "{courseName}"')
+                    course[courseName]["location"] += ", " + courseInformation[courseName]["location"]
+
+                # merge teacher
+                if course[courseName]["teacher"] != courseInformation[courseName]["teacher"]:
+                    logger.debug(f'Merging teacher information for "{courseName}"')
+                    course[courseName]["teacher"] += ", " + courseInformation[courseName]["teacher"]
+
+            else:  # no duplication found, update dict anyway
+                course.update(courseInformation)
+
         logger.debug(f'All course information is parsed, result: "{course}"')
         return course
 
@@ -310,9 +341,7 @@ class PowerSchool:
             else:
                 raise ValueError(f'Unexpected invalid timestamp: "{timestamp}"')
 
-        scheduleTbody: Tag = self.schedulePageContent.select_one(
-            "#tableStudentSchedMatrix"
-        )
+        scheduleTbody: Tag = self.schedulePageContent.select_one("#tableStudentSchedMatrix")
         matrixItemsFilter = re.compile(r"scheduleClass\d+")
 
         matrixItems = set()
