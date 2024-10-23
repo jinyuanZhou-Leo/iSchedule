@@ -5,6 +5,7 @@ import itertools, uuid, pytz
 import icalendar as ic
 from loguru import logger
 from datetime import datetime, time, timedelta
+from powerschool import PowerSchool
 from utils import *
 
 
@@ -158,6 +159,14 @@ class Course:
         return self.cycle * 5
 
     def getDecodedIndex(self, term: Term) -> list[list[int]]:
+        if isinstance(self.index, list):
+            logger.debug("Using traditional index decoder")
+            return self._traditionalDecoder(term)
+        else:
+            logger.debug("Using ps index decoder")
+            return PowerSchool.ps2list(self.index, self.getCycleDay())
+
+    def _traditionalDecoder(self, term: Term) -> list[list[int]]:
 
         def decode_component(component: list | str | int, maximum: int):
             """
@@ -231,6 +240,7 @@ class Course:
                 ]
             )
         # return mergeFirstItem(product)
+        print(product)
         return product
 
     def eventify(
@@ -294,10 +304,10 @@ def generateICS(term: Term, config: dict) -> bytes:
     # If there are holidays, the rrule strategy is not gonna work effectively though
     if (
         term.holidays
-        or config["countDayInHoliday"] == False
-        or config["reduceFileSize"] == False
+        or config.get("countDayInHoliday") == True
+        or config.get("reduceFileSize") == False
     ):
-        if config["reduceFileSize"] == True:
+        if config.get("reduceFileSize") == True:
             logger.warning(
                 "Reduce file size mode DOES NOT support holiday and countDayInHoliday functions, attempt to process in normal mode instead..."
             )
@@ -322,7 +332,7 @@ def generateICS(term: Term, config: dict) -> bytes:
                                 ics.add_component(event)
                         cnt += 1
                     else:  # workday but holiday
-                        if config["countDayInHoliday"] == True:
+                        if config.get("countDayInHoliday") == True:
                             cnt += 1
 
             for holiday in term.holidays:
