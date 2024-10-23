@@ -5,8 +5,6 @@ import json, random, re, time
 import random
 import re
 import time
-import requests
-from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 from typing import Generator
 from functools import wraps
@@ -38,8 +36,7 @@ def day2str(day: int) -> str:
     if 1 <= day <= 5:
         return map[day]
     else:
-        logger.critical(f"Invalid day: {day}")
-        exit(0)
+        raise ValueError(f"Invalid day: {day}")
 
 
 def dateRange(start: datetime, end: datetime) -> Generator[datetime, None, None]:
@@ -77,18 +74,17 @@ def loadJSON(path: Path) -> any:
                 data = json.load(f)
                 logger.success(f"{f.name} is successfully parsed")
                 return data
-            except json.JSONDecodeError:
+            except json.JSONDecodeError as e:
                 logger.critical(f"Invalid JSON format in {path}")
-            exit(0)
+                raise e
     except FileNotFoundError as e:
-        logger.critical(e)
+        raise e
     except IOError as e:
-        logger.critical(
-            f"{e}\nPermission denied, Try re-run the program by using 'sudo'."
-        )
+        logger.critical(f"Permission denied, Try re-run the program by using 'sudo'.")
+        raise e
     except Exception as e:
-        logger.critical(f"Unknown error occurred while parsing '{path}'\n{e}")
-    exit(0)
+        logger.critical(f"Unexpected error occurred while parsing '{path}'")
+        raise e
 
 
 def getRandomHexColor() -> str:
@@ -177,13 +173,11 @@ def setEnvVar(key: str, value: str) -> None:
         with open(path, "r") as f:
             env = f.readlines()
     except IOError as e:
-        logger.critical(
-            f"{e}: Permission denied, Try re-run the program by using 'sudo'."
-        )
-        exit(0)
+        logger.critical(f"Permission denied, Try re-run the program by using 'sudo'")
+        raise e
     except Exception as e:
-        logger.critical(f"Unknown error occurred while parsing '{f}': {e}")
-        exit(0)
+        logger.critical(f"Unexpected error occurred while parsing '{f}'")
+        raise e
 
     found = False
     updatedEnv = []
@@ -201,13 +195,11 @@ def setEnvVar(key: str, value: str) -> None:
         with open(path, "w") as f:
             f.writelines(updatedEnv)
     except IOError as e:
-        logger.critical(
-            f"{e}: Permission denied, Try re-run the program by using 'sudo'."
-        )
-        exit(0)
+        logger.critical(f"Permission denied, Try re-run the program by using 'sudo'")
+        raise e
     except Exception as e:
-        logger.critical(f"Unknown error occurred while parsing '{f}': {e}")
-        exit(0)
+        logger.critical(f"Unexpected error occurred while parsing '{f}'")
+        raise e
 
 
 if __name__ == "__main__":
