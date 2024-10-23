@@ -9,18 +9,17 @@ from utils import *
 from pathlib import Path
 from dotenv import load_dotenv
 from loguru import logger
-from tqdm import tqdm, trange
+from tqdm import tqdm
 
 
 logger.remove()
 # lambda msg: tqdm.write(msg, end="")
 logger.add(
-    sys.stdout,
-    level="DEBUG",
+    lambda msg: tqdm.write(msg, end=""),
+    level="INFO",
     colorize=True,
 )
-logger.add("powerschool_connector.log", level="TRACE", rotation="10MB")
-# TODO:retention=
+logger.add("powerschool_connector.log", level="TRACE", rotation="100KB")
 load_dotenv()
 psUsernameCache: str | None = os.getenv("PS_USERNAME")
 psPasswordCache: str | None = os.getenv("PS_PASSWORD")
@@ -75,9 +74,10 @@ except Exception as e:
     logger.critical(f"Failed to get schedule: {e}")
     exit(3)
 
-with open(Path.cwd() / "schedule2.json", "w", encoding="utf-8") as f:
+with open(Path.cwd() / "schedulePS.json", "w", encoding="utf-8") as f:
     f.write(json.dumps(scheduleJson, ensure_ascii=False, indent=4))
 
 logger.success(
     'Schedule is generated successfully, please check the "schedule.json" in current directory'
 )
+logger.success("For ICS file generation, please run main.py")
