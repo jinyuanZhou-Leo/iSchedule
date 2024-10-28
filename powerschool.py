@@ -197,9 +197,7 @@ class PowerSchool:
             recursive=False,
         )
 
-    def _getGradeTableColumnMap(
-        self, gradeTableHeader: ResultSet[Tag]
-    ) -> dict[str, int]:
+    def _getGradeTableColumnMap(self, gradeTableHeader: ResultSet[Tag]) -> dict[str, int]:
         colCnt = 0
         colMap: dict = {}
         logger.debug("Building column map...")
@@ -239,9 +237,7 @@ class PowerSchool:
         logger.debug(f"Column map is built: {colMap}")
         return colMap
 
-    def _requestValue(
-        self, prompt: str, type_: type, defaultValue: any = None, unit: str = ""
-    ) -> any:
+    def _requestValue(self, prompt: str, type_: type, defaultValue: any = None, unit: str = "") -> any:
         if unit:
             unit = " " + unit
         while True:

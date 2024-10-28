@@ -3,7 +3,7 @@
 
 import os
 import json
-import sys
+import pwinput
 from powerschool import PowerSchool
 from utils import *
 from pathlib import Path
@@ -33,9 +33,10 @@ def requestUserInformation(disableCache=False) -> list:
         if disableCache:
             logger.debug("User information cache is disabled")
         else:
-            logger.warning("Cached user information is invalid, please enter again")
+            logger.warning("No valid user information cached, please enter again")
         newUsername: str = input("Enter your Powerschool Username: ").strip()
-        newPassword: str = input("Enter your Powerschool Password: ").strip()
+        newPassword: str = pwinput.pwinput(prompt="Enter your Powerschool Password: ")  # 回显*更安全
+        # TODO: use RSA/AES to encrypt the password saved locally
         setEnvVar("PS_USERNAME", newUsername)
         setEnvVar("PS_PASSWORD", newPassword)
         logger.info("User information is Cached")
