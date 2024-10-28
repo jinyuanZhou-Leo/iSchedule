@@ -1,9 +1,8 @@
 beautifulsoup4==4.12.3
-click==8.1.7
-Flask==3.0.3
 icalendar==6.0.1
 loguru==0.7.2
 MarkupSafe==2.1.5
+pwinput==1.0.3
 python-dotenv==1.0.1
 Requests==2.32.3
 tqdm==4.66.5
