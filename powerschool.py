@@ -16,25 +16,25 @@ class PowerSchool:
     password: str
     htmlParser: str
     mode: str
-    gradePageContent: BeautifulSoup | None
-    schedulePageContent: BeautifulSoup | None
+    __gradePageContent: BeautifulSoup | None
+    __schedulePageContent: BeautifulSoup | None
 
     def __init__(
         self, username: str, password: str, htmlParser: str = "lxml", mode="request"
     ) -> None:
         self.htmlParser = htmlParser
         self.mode = mode
-        self.gradePageContent = None  # init
-        self.schedulePageContent = None  # init
+        self.__gradePageContent = None  # init
+        self.__schedulePageContent = None  # init
         try:
-            self._login(username, password)
+            self.__login(username, password)
         except Exception as e:
             raise e
         else:
             self.username = username
             self.password = password
 
-    def _login(self, username: str, password: str):
+    def __login(self, username: str, password: str):
         def isLogin(psPage: requests.Response) -> bool:
             psPageContent = BeautifulSoup(psPage.content, self.htmlParser)
             if (
@@ -77,12 +77,10 @@ class PowerSchool:
         schedulePage = requester.get(SCHEDULE_URL)
         progressbar.update(30)
         schedulePageFilter = SoupStrainer(["tr", "td", "th", "table", "tbody", "br"])
-        self.schedulePageContent = BeautifulSoup(
-            schedulePage.content, self.htmlParser, parse_only=schedulePageFilter
-        )
+        self.__schedulePageContent = BeautifulSoup(schedulePage.content, self.htmlParser, parse_only=schedulePageFilter)
         progressbar.update(30)
         if isLogin(psPage):
-            self.gradePageContent = BeautifulSoup(psPage.content, "lxml")
+            self.__gradePageContent = BeautifulSoup(psPage.content, "lxml")
             return True
         else:
             raise ValueError("Wrong username or password")
@@ -176,28 +174,26 @@ class PowerSchool:
         print(parsedIndex)
         return parsedIndex
 
-    def _getGradeTable(self) -> Tag:
-        return self.gradePageContent.select_one("table.linkDescList.grid")
+    def __getGradeTable(self) -> Tag:
+        return self.__gradePageContent.select_one("table.linkDescList.grid")
 
-    def _getGradeTableHeader(self) -> ResultSet[Tag]:
+    def __getGradeTableHeader(self) -> ResultSet[Tag]:
         return (
-            self._getGradeTable()
+            self.__getGradeTable()
             .find_all(
-                lambda tag: tag.get("class") == ["center", "th2"]
-                and tag.get("id", "") == "",
+                lambda tag: tag.get("class") == ["center", "th2"] and tag.get("id", "") == "",
                 recursive=False,
             )[0]
             .select("th")
         )
 
-    def _getGradeTableContent(self) -> ResultSet[Tag]:
-        return self._getGradeTable().find_all(
-            lambda tag: tag.get("class") == ["center"]
-            and tag.get("id", "").startswith("ccid"),
+    def __getGradeTableContent(self) -> ResultSet[Tag]:
+        return self.__getGradeTable().find_all(
+            lambda tag: tag.get("class") == ["center"] and tag.get("id", "").startswith("ccid"),
             recursive=False,
         )
 
-    def _getGradeTableColumnMap(self, gradeTableHeader: ResultSet[Tag]) -> dict[str, int]:
+    def __getGradeTableColumnMap(self, gradeTableHeader: ResultSet[Tag]) -> dict[str, int]:
         colCnt = 0
         colMap: dict = {}
         logger.debug("Building column map...")
@@ -280,9 +276,9 @@ class PowerSchool:
             )
 
     def getAllCourseInformation(self) -> dict[any, dict]:
-        gradeTableHeader = self._getGradeTableHeader()  # list of table headers
-        gradeTableContent = self._getGradeTableContent()  # list of table content
-        columnMap = self._getGradeTableColumnMap(gradeTableHeader)
+        gradeTableHeader = self.__getGradeTableHeader()  # list of table headers
+        gradeTableContent = self.__getGradeTableContent()  # list of table content
+        columnMap = self.__getGradeTableColumnMap(gradeTableHeader)
 
         course: dict = {}
         for tRow in gradeTableContent:
@@ -334,7 +330,7 @@ class PowerSchool:
             else:
                 raise ValueError(f'Unexpected invalid timestamp: "{timestamp}"')
 
-        scheduleTbody: Tag = self.schedulePageContent.select_one("#tableStudentSchedMatrix")
+        scheduleTbody: Tag = self.__schedulePageContent.select_one("#tableStudentSchedMatrix")
         matrixItemsFilter = re.compile(r"scheduleClass\d+")
 
         matrixItems = set()
