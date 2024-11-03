@@ -14,34 +14,36 @@ from tqdm import tqdm
 class PowerSchool:
     username: str
     password: str
-    htmlParser: str
-    mode: str
-    __gradePageContent: BeautifulSoup | None
-    __schedulePageContent: BeautifulSoup | None
 
     def __init__(
         self, username: str, password: str, htmlParser: str = "lxml", mode="request"
     ) -> None:
-        self.htmlParser = htmlParser
-        self.mode = mode
-        self.__gradePageContent = None  # init
-        self.__schedulePageContent = None  # init
+        self.htmlParser: str = htmlParser
+        self.mode: str = mode
+        self.__homePageContent: BeautifulSoup | None = None  # init
+        self.__schedulePageContent: BeautifulSoup | None = None  # init
+        self.__gradeTableColomnMap = None  # init
         try:
             self.__login(username, password)
         except Exception as e:
             raise e
         else:
+            # successfully logged in
             self.username = username
             self.password = password
+            self.__gradeTableColomnMap = self.__getGradeTableColumnMap(self.__getGradeTableHeader())
 
     def __login(self, username: str, password: str):
-        def isLogin(psPage: requests.Response) -> bool:
-            psPageContent = BeautifulSoup(psPage.content, self.htmlParser)
-            if (
-                "pslogin" in psPageContent.body["class"]
-                and psPageContent.body["id"] == "pslogin"
-            ):
-                return False
+
+        def loginChecker() -> bool:
+            if "pslogin" in self.__homePageContent.body["class"] and self.__homePageContent.body["id"] == "pslogin":
+                # if a login user interface is detected
+                raise ValueError("Failed to login to PowerSchool: Incorrect username or password")
+            elif "access has been disabled" in self.__homePageContent.select("#content-main h1")[0].text:
+                # if access is denied by PowerSchool (Grade table is not available)
+                raise RuntimeError(
+                    f"Access to PowerSchool is denied, {self.__homePageContent.select("#content-main h1")[0].text}"
+                )
             else:
                 return True
 
@@ -73,17 +75,22 @@ class PowerSchool:
         progressbar.update(10)
         logger.info("Connecting to Powerschool...")
         psPage = requester.post(LOGIN_URL, data=PSLOGINDATA)
+
         progressbar.update(30)
         schedulePage = requester.get(SCHEDULE_URL)
         progressbar.update(30)
         schedulePageFilter = SoupStrainer(["tr", "td", "th", "table", "tbody", "br"])
         self.__schedulePageContent = BeautifulSoup(schedulePage.content, self.htmlParser, parse_only=schedulePageFilter)
         progressbar.update(30)
-        if isLogin(psPage):
-            self.__gradePageContent = BeautifulSoup(psPage.content, "lxml")
-            return True
+
+        self.__homePageContent = BeautifulSoup(psPage.content, self.htmlParser)
+
+        try:
+            loginChecker()
+        except Exception as e:
+            raise e
         else:
-            raise ValueError("Wrong username or password")
+            logger.success("Successfully login to PowerSchool")
 
     @staticmethod
     def ps2list(psIndex: str | list, cycle: int) -> list[list]:
@@ -175,7 +182,7 @@ class PowerSchool:
         return parsedIndex
 
     def __getGradeTable(self) -> Tag:
-        return self.__gradePageContent.select_one("table.linkDescList.grid")
+        return self.__homePageContent.select_one("table.linkDescList.grid")
 
     def __getGradeTableHeader(self) -> ResultSet[Tag]:
         return (
@@ -251,7 +258,7 @@ class PowerSchool:
                     f'Invalid input, Required input of "{type_}", Message: {e}'
                 )
 
-    def _getCourseInformation(self, tCell: Tag) -> dict[str, str]:
+    def __getCourseInformation(self, tCell: Tag) -> dict[str, str]:
         tData = [item for item in tCell.get_text().split("\xa0") if item != "\xa0"]
         # /xa0 represents the &nbsp; in HTML
         courseName: str = tData[0].strip()
@@ -276,16 +283,13 @@ class PowerSchool:
             )
 
     def getAllCourseInformation(self) -> dict[any, dict]:
-        gradeTableHeader = self.__getGradeTableHeader()  # list of table headers
         gradeTableContent = self.__getGradeTableContent()  # list of table content
-        columnMap = self.__getGradeTableColumnMap(gradeTableHeader)
+        columnMap = self.__gradeTableColomnMap
 
         course: dict = {}
         for tRow in gradeTableContent:
             tData = tRow.select("td")
-            courseInformation: dict = self._getCourseInformation(
-                tData[columnMap["CourseInformation"]]
-            )
+            courseInformation: dict = self.__getCourseInformation(tData[columnMap["CourseInformation"]])
             courseName = list(courseInformation.keys())[0]
             if courseName == "BCA Homeroom":  # ignore BCA Homeroom
                 logger.warning(f"Skip {courseName} while parsing course information")
@@ -399,6 +403,18 @@ class PowerSchool:
         scheduleJson.update(termSettings)
 
         return scheduleJson
+
+    def getGrade(self, time: str, course: str):
+        columnMap = self.__gradeTableColomnMap
+        gradeTableContent = self.__getGradeTableContent()
+
+        for index, tRow in enumerate(gradeTableContent):
+            tData = tRow.select("td")
+            courseInformation: dict = self.__getCourseInformation(tData[columnMap["CourseInformation"]])
+            courseName = list(courseInformation.keys())[0]
+            if courseName == course:
+                raise NotImplementedError("getGrade is not implemented yet")
+                return tData[columnMap[time.upper()]].get_text().strip()  # TODO: this return need implementation
 
 
 if __name__ == "__main__":

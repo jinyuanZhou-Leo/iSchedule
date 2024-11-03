@@ -62,7 +62,7 @@ for attempt in range(MAX_ATTEMPTS):
         if attempt == MAX_ATTEMPTS - 1:
             setEnvVar("PS_USERNAME", "")  # clear the cache .env file
             setEnvVar("PS_PASSWORD", "")
-            logger.error("Maximum login attempts, cleaning the cache and exit")
+            logger.error("Maximum login attempts, cleaning cache and exit")
             exit(2)
     else:
         logger.success("Login to Powerschool successfully")
