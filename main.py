@@ -9,7 +9,7 @@ from datetime import datetime
 from utils import *
 from data import Location, Term, Course,Holiday, generateICS
 
-VERSION = "3.1.0"
+VERSION = "3.2.0"
 
 cliArgumentParser = argparse.ArgumentParser(description="iSchedule")
 cliArgumentParser.add_argument('-v', '--version',action="store_true", help='显示版本')
