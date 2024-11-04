@@ -5,21 +5,37 @@
 
 
 ## 模块功能说明
-- **data.py:** 类
+- **data.py:** 数据处理相关类
 - **main.py:** 主程序
+- **powerschool_connector.py** 从powerschool导入课程表数据的工具
+- **powerschool.py** powerschool相关类
 - **util.py:** 工具库
-- **json_generator.py:** json格式课程表生成器
+- **json_generator.py:** AI Schedule.json生成器
 - **rule.md** 关于Schedule.json格式的AI Prompt
-- **config.json:** ics生成配置
-- **schedule.json:** 课表样例
+- **config.json:** 程序配置
+- **schedule.json:** 样例
 
 
 
-## 使用说明
-1. **完成配置文件**: (完整的配置文件样例详见schedule.json和config.json)
-2. **(如果需要使用AI JSON生成)**: 
-   * 在程序运行目录下创建```.env```文件
-   * 在```.env```文件中填写：```ZHIPU_API_KEY = "your-zhipu-api-key"```
+## 从JSON日程表生成ICS文件
+1. 运行```main.py```,输入JSON文件路径
+   
+> [!TIP]
+> 程序会默认使用目录下```schedule.json```生成ICS,如不希望自动生成，请删除程序目录下名称为```schedule.json```的文件
+
+## AI生成JSON日程表: 
+1. 运行```json_generator.py```输入您的智谱API_KEY
+2. 通过自然语言对话
+3. 完成生成, 成品JSON日程表会以```schedule.json```为文件名保存在程序目录下
+
+## 从PowerSchool生成JSON日程表
+1. 运行```powerschool_connector.py```
+2. 根据提示输入正确的用户名与密码
+3. 根据提示输入所需的信息
+4. 完成生成, 成品JSON日程表会以```schedule.json```为文件名保存在程序目录下
+  
+> [!TIP]
+> PowerSchool系统在考试期间无法访问
 
 
 
