@@ -240,6 +240,7 @@ class PowerSchool:
         logger.debug(f"Column map is built: {colMap}")
         return colMap
 
+    # TODO: statics method, or move to utils.py
     def _requestValue(self, prompt: str, type_: type, defaultValue: any = None, unit: str = "") -> any:
         if unit:
             unit = " " + unit
@@ -257,6 +258,9 @@ class PowerSchool:
                 logger.error(
                     f'Invalid input, Required input of "{type_}", Message: {e}'
                 )
+            except Exception as e:
+                logger.error(f'Unexpected exception while requesting value with prompt \"{prompt}\"')
+                raise e
 
     def __getCourseInformation(self, tCell: Tag) -> dict[str, str]:
         tData = [item for item in tCell.get_text().split("\xa0") if item != "\xa0"]
