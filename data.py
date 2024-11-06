@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 # coding=utf-8
 
-import re
-import itertools, uuid, pytz
+import itertools
+import uuid
+from datetime import datetime, time, timedelta
+
 import icalendar as ic
 from loguru import logger
-from datetime import datetime, time, timedelta
+
 from powerschool import PowerSchool
 from utils import *
 
@@ -159,13 +161,14 @@ class Course:
     def getDecodedIndex(self, term: Term) -> list[list[int]]:
         if isinstance(self.index[0], list):
             logger.debug("Using traditional index decoder")
-            return self._traditionalDecoder(term)
+            return self.__traditionalDecoder(term)
         else:
             logger.debug("Using ps index decoder")
             return PowerSchool.ps2list(self.index, self.getCycleDay())
 
-    def _traditionalDecoder(self, term: Term) -> list[list[int]]:
+    def __traditionalDecoder(self, term: Term) -> list[list[int]]:
         logger.warning("Traditional format is deprecated, it will be removed in future releases")
+
         def decode_component(component: list | str | int, maximum: int):
             """
             Decode a component of a schedule.
@@ -230,9 +233,7 @@ class Course:
 
         return product
 
-    def eventify(
-        self, term: Term, date: datetime, block: int, reminderSetting: dict
-    ) -> ic.Event:
+    def eventify(self, term: Term, date: datetime, block: int, reminderSetting: dict) -> ic.Event:
         event: ic.Event = ic.Event()
         event.add("summary", self.name)
         event.add(
@@ -312,9 +313,7 @@ def generateICS(term: Term, config: dict) -> bytes:
                     if not term.isHoliday(date):  # if the day is both a workday and non-holiday
                         for timestamp in timetable:
                             if timestamp[0] - 1 == cnt:
-                                event: ic.Event = course.eventify(
-                                    term, date, timestamp[1], config["alarm"]
-                                )
+                                event: ic.Event = course.eventify(term, date, timestamp[1], config["alarm"])
 
                                 ics.add_component(event)
                         cnt += 1
@@ -326,16 +325,12 @@ def generateICS(term: Term, config: dict) -> bytes:
                 for compensation in holiday.compensations:
                     for timestamp in timetable:
                         if timestamp[0] == compensation[1]:
-                            event = course.eventify(
-                                term, compensation[0], timestamp[1], config["alarm"]
-                            )
+                            event = course.eventify(term, compensation[0], timestamp[1], config["alarm"])
                             ics.add_component(event)
 
     # Else, use rrule strategy to reduce the file size and increase the performance
     else:
-        logger.warning(
-            "Tips - Reduce file size mode is enabled, some features may not supported"
-        )
+        logger.warning("Tips - Reduce file size mode is enabled, some features may not supported")
         logger.debug("Using RRule Strategy")
         if term.start.weekday() < 5:
             # 如果用户输入的起始日期是工作日，则rrule从 该周 周一起算
@@ -364,6 +359,7 @@ def generateICS(term: Term, config: dict) -> bytes:
                 ics.add_component(event)
 
     return ics.to_ical()
+
 
 if __name__ == "__main__":
     logger.warning("This module cannot run independently")
