@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 # coding=utf-8
 
-import json, random, re, time
+import json
 import random
 import re
 import time
 from datetime import datetime, timedelta
-from typing import Generator
 from functools import wraps
 from pathlib import Path
+from typing import Generator, Any
+
 from loguru import logger
 
 __all__ = [
@@ -22,6 +23,7 @@ __all__ = [
     "getWeekInfo",
     "day2str",
     "setEnvVar",
+    "requestValue",
 ]
 
 
@@ -50,15 +52,13 @@ def timer(func):
         start_time = time.time()
         result = func(*args, **kwargs)
         end_time = time.time()
-        logger.info(
-            f"{repr(func.__name__)} called, Time consumed {end_time - start_time:.6f}s"
-        )
+        logger.info(f"{repr(func.__name__)} called, Time consumed {end_time - start_time:.6f}s")
         return result
 
     return wrapper
 
 
-def loadJSON(path: Path) -> any:
+def loadJSON(path: Path) -> Any:
     """
     json.load() with proper error handling
 
@@ -200,6 +200,26 @@ def setEnvVar(key: str, value: str) -> None:
     except Exception as e:
         logger.critical(f"Unexpected error occurred while parsing '{f}'")
         raise e
+
+
+def requestValue(prompt: str, type_: type, defaultValue: any = None, unit: str = "") -> any:
+    if unit:
+        unit = " " + unit
+    while True:
+        try:
+            inputValue = input(f"({defaultValue}{unit}) {prompt}: ").strip()
+            if inputValue == "":
+                if defaultValue:
+                    return defaultValue
+                else:
+                    raise ValueError("Default value does't not exist")
+            inputValue = type_(inputValue)
+            return type_(inputValue)
+        except (ValueError, TypeError) as e:
+            logger.error(f'Invalid input, Required input of "{type_}", Message: {e}')
+        except Exception as e:
+            logger.error(f'Unexpected exception while requesting value with prompt "{prompt}"')
+            raise e
 
 
 if __name__ == "__main__":

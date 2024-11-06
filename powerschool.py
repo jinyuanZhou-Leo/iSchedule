@@ -2,27 +2,26 @@
 # coding=utf-8
 
 import itertools
-import re
 import locale
-import requests
-from requestHandler import RequestHandler
+import re
+
 from bs4 import BeautifulSoup, ResultSet, SoupStrainer, Tag
 from loguru import logger
 from tqdm import tqdm
+from requestHandler import RequestHandler
+from utils import requestValue
 
 
 class PowerSchool:
     username: str
     password: str
 
-    def __init__(
-        self, username: str, password: str, htmlParser: str = "lxml", mode="request"
-    ) -> None:
+    def __init__(self, username: str, password: str, htmlParser: str = "lxml", mode="request") -> None:
         self.htmlParser: str = htmlParser
         self.mode: str = mode
         self.__homePageContent: BeautifulSoup | None = None  # init
         self.__schedulePageContent: BeautifulSoup | None = None  # init
-        self.__gradeTableColomnMap = None  # init
+        self.__gradeTableColumnMap = None  # init
         try:
             self.__login(username, password)
         except Exception as e:
@@ -31,7 +30,7 @@ class PowerSchool:
             # successfully logged in
             self.username = username
             self.password = password
-            self.__gradeTableColomnMap = self.__getGradeTableColumnMap(self.__getGradeTableHeader())
+            self.__gradeTableColumnMap = self.__getGradeTableColumnMap(self.__getGradeTableHeader())
 
     def __login(self, username: str, password: str):
 
@@ -106,9 +105,7 @@ class PowerSchool:
             dashIndex: int = component.find("-")  # if the component is a range
             if dashIndex != -1:  # is range
                 # filling the range
-                leftBound, rightBound = int(component[:dashIndex]), int(
-                    component[dashIndex + 1 :]
-                )
+                leftBound, rightBound = int(component[:dashIndex]), int(component[dashIndex + 1 :])
                 if leftBound > rightBound:
                     raise ValueError(
                         f'Invalid schedule file, Error processing "{psIndex}", "{leftBound}-{rightBound}" is out of range'
@@ -121,9 +118,7 @@ class PowerSchool:
                 elif component in abbrDict:
                     return abbrDict[component]
                 else:
-                    raise ValueError(
-                        f'Invalid Powerschool index format, cannot parse component "{component}"'
-                    )
+                    raise ValueError(f'Invalid Powerschool index format, cannot parse component "{component}"')
 
         psIndexes: list = []
         if isinstance(psIndex, str):
@@ -138,9 +133,7 @@ class PowerSchool:
             rightParentheseIndex: int = psIndex.rfind(")")
             if leftParentheseIndex == -1 or rightParentheseIndex == -1:
                 # can not find parentheses
-                raise ValueError(
-                    "Invalid Powerschool index format, cannot find parentheses"
-                )
+                raise ValueError("Invalid Powerschool index format, cannot find parentheses")
 
             if psIndex.startswith("p"):
                 psIndex = psIndex.removeprefix("p")
@@ -149,9 +142,7 @@ class PowerSchool:
                     'PS index starts with "hr", do you mean "Homeroom"? It isn\'t currently supported by PS Connector'
                 )
             else:
-                raise ValueError(
-                    "Invalid Powerschool index format, it should startwith 'P'"
-                )
+                raise ValueError("Invalid Powerschool index format, it should startwith 'P'")
 
             if len(psIndex[: leftParentheseIndex - 1]) != 0:
                 block: int = int(psIndex[: leftParentheseIndex - 1])
@@ -159,22 +150,13 @@ class PowerSchool:
                 block = -1
 
             if block < 0:
-                raise ValueError(
-                    "Invalid Powerschool index format, block number is invalid or out of range"
-                )
+                raise ValueError("Invalid Powerschool index format, block number is invalid or out of range")
             indexes: str = psIndex[leftParentheseIndex : rightParentheseIndex - 1]
 
             components: list[str] = indexes.split(",")
             parsedComponent: list[list] = []
             for component in components:
-                parsedComponent.extend(
-                    [
-                        list(t)
-                        for t in itertools.product(
-                            componentParser(component), [block - 1]
-                        )
-                    ]
-                )
+                parsedComponent.extend([list(t) for t in itertools.product(componentParser(component), [block - 1])])
 
             parsedIndex.extend(parsedComponent)
 
@@ -240,40 +222,12 @@ class PowerSchool:
         logger.debug(f"Column map is built: {colMap}")
         return colMap
 
-    # TODO: statics method, or move to utils.py
-    def _requestValue(self, prompt: str, type_: type, defaultValue: any = None, unit: str = "") -> any:
-        if unit:
-            unit = " " + unit
-        while True:
-            try:
-                inputValue = input(f"({defaultValue}{unit}) {prompt}: ").strip()
-                if inputValue == "":
-                    if defaultValue:
-                        return defaultValue
-                    else:
-                        raise ValueError("Default value does't not exist")
-                inputValue = type_(inputValue)
-                return type_(inputValue)
-            except (ValueError, TypeError) as e:
-                logger.error(
-                    f'Invalid input, Required input of "{type_}", Message: {e}'
-                )
-            except Exception as e:
-                logger.error(f'Unexpected exception while requesting value with prompt \"{prompt}\"')
-                raise e
-
     def __getCourseInformation(self, tCell: Tag) -> dict[str, str]:
         tData = [item for item in tCell.get_text().split("\xa0") if item != "\xa0"]
         # /xa0 represents the &nbsp; in HTML
         courseName: str = tData[0].strip()
-        courseLocation: str = (
-            tCell.find("span", text="-\xa0Rm:")
-            .find_next_sibling("span")
-            .get_text(strip=True)
-        )
-        courseTeacher: str = (
-            tCell.find("a", {"target": "_top"}).get_text().removeprefix("Email").strip()
-        )
+        courseLocation: str = tCell.find("span", text="-\xa0Rm:").find_next_sibling("span").get_text(strip=True)
+        courseTeacher: str = tCell.find("a", {"target": "_top"}).get_text().removeprefix("Email").strip()
         if courseName and courseLocation and courseTeacher:
             courseLocation.replace("，", ", ")  # TODO: work around: this doesn't work
             # replace chinese comma with English comma
@@ -282,13 +236,11 @@ class PowerSchool:
             course[courseName] = courseData
             return course
         else:
-            raise RuntimeError(
-                "Unexpected error occur while finding course information"
-            )
+            raise RuntimeError("Unexpected error occur while finding course information")
 
     def getAllCourseInformation(self) -> dict[any, dict]:
         gradeTableContent = self.__getGradeTableContent()  # list of table content
-        columnMap = self.__gradeTableColomnMap
+        columnMap = self.__gradeTableColumnMap
 
         course: dict = {}
         for tRow in gradeTableContent:
@@ -363,26 +315,12 @@ class PowerSchool:
         logger.info("For example: (Default Value) XXX Info: Your Input")
         logger.info("Press ENTER for using default setting")
 
-        termName: str = self._requestValue("Term Name", str, defaultValue="Term")
-        termStart: list = [
-            int(item)
-            for item in self._requestValue(
-                f'"{termName}" start at (YY.mm.dd)', str
-            ).split(".")
-        ]
-        termEnd: list = [
-            int(item)
-            for item in self._requestValue(
-                f'"{termName}" end at (YY.mm.dd)', str
-            ).split(".")
-        ]
+        termName: str = requestValue("Term Name", str, defaultValue="Term")
+        termStart: list = [int(item) for item in requestValue(f'"{termName}" start at (YY.mm.dd)', str).split(".")]
+        termEnd: list = [int(item) for item in requestValue(f'"{termName}" end at (YY.mm.dd)', str).split(".")]
 
-        duration: int = self._requestValue(
-            "Duration for each class", int, defaultValue=70, unit="minutes"
-        )
-        cycle: int = self._requestValue(
-            "How many weeks per cycle", int, defaultValue=2, unit="week"
-        )
+        duration: int = requestValue("Duration for each class", int, defaultValue=70, unit="minutes")
+        cycle: int = requestValue("How many weeks per cycle", int, defaultValue=2, unit="week")
 
         # input validation checking
         if len(termStart) != 3 or len(termEnd) != 3:
@@ -391,7 +329,7 @@ class PowerSchool:
             raise ValueError("Start date must earlier than end date")
         if cycle > 2:
             logger.warning(
-                f'The cycle number seems rare: "cycle={cycle}", do you mean {cycle*7} days or {cycle*5} workdays? If you KNOW what you are doing, please ignore this warning'
+                f'The cycle number seems rare: "cycle={cycle}", do you mean {cycle * 7} days or {cycle * 5} workdays? If you KNOW what you are doing, please ignore this warning'
             )
 
         termSettings: dict[any, dict] = {
@@ -409,7 +347,7 @@ class PowerSchool:
         return scheduleJson
 
     def getGrade(self, time: str, course: str):
-        columnMap = self.__gradeTableColomnMap
+        columnMap = self.__gradeTableColumnMap
         gradeTableContent = self.__getGradeTableContent()
 
         for index, tRow in enumerate(gradeTableContent):
