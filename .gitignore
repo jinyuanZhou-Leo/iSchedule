@@ -21,3 +21,5 @@ webui/
 .vscode/
 data_multithread.py
 schedulePS.json
+.idea/*
+*.html
