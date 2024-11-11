@@ -248,7 +248,7 @@ class PowerSchool:
             courseInformation: dict = self.__getCourseInformation(tData[columnMap["CourseInformation"]])
             courseName = list(courseInformation.keys())[0]
             if courseName == "BCA Homeroom":  # ignore BCA Homeroom
-                logger.warning(f"Skip {courseName} while parsing course information")
+                logger.warning(f'Skip "{courseName}" while parsing course information')
                 continue
             courseInformation[courseName]["index"] = [tData[columnMap["TimeIndex"]].get_text().strip()]
 
