@@ -12,6 +12,8 @@ from tqdm import tqdm, trange
 from data import Location, Term, Course, Holiday, generateICS
 from utils import *
 
+# TODO: SchedCapsule
+
 VERSION = "3.2.5"
 # CLI Arguments Def
 cliArgumentParser = argparse.ArgumentParser(description="iSchedule")
