@@ -56,10 +56,10 @@ load_dotenv()
 APIKEY: str | None = os.getenv("APIKEY")
 
 if not APIKEY:
-    logger.error('错误:未找到".env"配置文件')
+    logger.warning('未找到".env"配置文件')
     APIKEY = input("请输入智谱AI API_KEY以使用在线API推理: ").strip()
     setEnvVar("APIKEY", APIKEY)
-    logger.success('智谱AI API_KEY已成功写入".env"配置文件\n')
+    logger.info("智谱AI API_KEY已缓存")
 else:
     logger.success(
         f"成功读取ZHIPU_API_KEY: {APIKEY[:10]}...{APIKEY[40:]}"
@@ -92,6 +92,8 @@ logger.info(f"\n\n最终生成的Schedule.json:\n{finalScheduleJSON}")
 with open("schedule.json", "w") as f:
     f.write(finalScheduleJSON)
     logger.success(f"Schedule.json文件已生成, 位于\"{str(Path.cwd())}/schedule.json\"")
+
+# Sample:
 
 # 日程表名称为2025 Schedule, 学期的名称为Term 1, 从2024年9月1号到2025年1月2号，每节课70分钟。每天第一节课开始于8点，第二节课开始于10点。两周为一个循环。
 
