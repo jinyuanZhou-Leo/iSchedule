@@ -4,7 +4,7 @@
 import os
 import json
 import pwinput
-from powerschool import PowerSchool
+from powerschool import PowerSchool, PowerschoolExamRestriction, PowerschoolInvalidLoginInformation
 from utils import *
 from pathlib import Path
 from dotenv import load_dotenv
@@ -13,7 +13,6 @@ from tqdm import tqdm
 
 
 logger.remove()
-# lambda msg: tqdm.write(msg, end="")
 logger.add(
     lambda msg: tqdm.write(msg, end=""),
     level="INFO",
@@ -46,8 +45,7 @@ logger.debug("PS Connector starting...")
 MAX_ATTEMPTS = 3
 powerschool: PowerSchool
 for attempt in range(MAX_ATTEMPTS):
-    if attempt > 0:
-        # if it is not the first attempt, then notify the user
+    if attempt > 0:  # if it is not the first attempt, then notify the user
         logger.warning(
             f"Login Failed (Attempt:[{attempt+1}/{MAX_ATTEMPTS}]), retrying..."
         )
@@ -57,8 +55,18 @@ for attempt in range(MAX_ATTEMPTS):
 
     try:
         powerschool = PowerSchool(*requestUserInformation(disableCache))
+    except PowerschoolExamRestriction as e:
+        logger.error(f"Failed to login to Powerschool because: {e}")
+        logger.info("Please try again later during non-exam period, or please contact your school")
+    except PowerschoolInvalidLoginInformation as e:
+        logger.error(f"Failed to login to Powerschool because: {e}")
+        if attempt == MAX_ATTEMPTS - 1:
+            setEnvVar("PS_USERNAME", "")  # clear the cache .env file
+            setEnvVar("PS_PASSWORD", "")
+            logger.error("Maximum login attempts, cleaning cache and exit")
+            exit(2)
     except Exception as e:
-        logger.error(f"Failed to login to Powerschool: {e}")
+        logger.error(f"Failed to login to Powerschool due to unknown error: {e}")
         if attempt == MAX_ATTEMPTS - 1:
             setEnvVar("PS_USERNAME", "")  # clear the cache .env file
             setEnvVar("PS_PASSWORD", "")

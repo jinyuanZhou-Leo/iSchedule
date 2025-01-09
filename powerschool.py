@@ -37,16 +37,24 @@ class PowerSchool:
         def loginChecker() -> bool:
             if "pslogin" in self.__homePageContent.body["class"] and self.__homePageContent.body["id"] == "pslogin":
                 # if a login user interface is detected
-                raise ValueError("Failed to login to PowerSchool: Incorrect username or password")
+                raise PowerschoolInvalidLoginInformation(
+                    "Failed to login to PowerSchool: Incorrect username or password"
+                )
             elif "access has been disabled" in self.__homePageContent.select("#content-main h1")[0].text:
                 # if access is denied by PowerSchool (Grade table is not available)
-                raise RuntimeError(
+                raise PowerschoolExamRestriction(
                     f"Access to PowerSchool is denied, {self.__homePageContent.select("#content-main h1")[0].text}"
                 )
             else:
                 return True
 
-        progressbar = tqdm(desc="Logging into Powerschool", unit="%", total=100)  # TODO: enhance description
+        progressbar = tqdm(
+            desc="Logging into Powerschool",
+            unit="%",
+            total=100,
+            bar_format="{l_bar}{bar}| {elapsed}",
+            ncols=100,
+        )
         languageSetting = locale.getlocale()[0]
         logger.debug(f"System language: {languageSetting}")
         if languageSetting != "zh_CN" and languageSetting != "en_US":
@@ -78,7 +86,9 @@ class PowerSchool:
         progressbar.update(30)
         schedulePage = requester.get(SCHEDULE_URL)
         progressbar.update(30)
-        schedulePageFilter = SoupStrainer(["tr", "td", "th", "table", "tbody", "br"])
+        schedulePageFilter = SoupStrainer(
+            ["tr", "td", "th", "table", "tbody", "br"]
+        )  # optimization, get rid of uncessary tags
         self.__schedulePageContent = BeautifulSoup(schedulePage.content, self.htmlParser, parse_only=schedulePageFilter)
         progressbar.update(30)
 
@@ -361,3 +371,13 @@ class PowerSchool:
 
 if __name__ == "__main__":
     logger.warning("This module cannot run independently")
+
+
+class PowerschoolExamRestriction(Exception):
+    def __init__(self, message):
+        super().__init__(message)
+
+
+class PowerschoolInvalidLoginInformation(Exception):
+    def __init__(self, message):
+        super().__init__(message)
