@@ -13,7 +13,7 @@ except ImportError as e:
     try:
         subprocess.check_call([sys.executable, "-m", "pip", "install", "lxml"])
     except Exception as e:
-        print(f"Unexpected error occured while installing lxml")
+        print(f"Unexpected error occurred while installing lxml")
         raise e
     else:
         print("Successfully installed lxml")
