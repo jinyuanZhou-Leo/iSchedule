@@ -1,0 +1,10 @@
+{
+    "name": "BCA25",
+    "color": "#67e4fa",
+    "alarm": {
+        "enabled": true,
+        "before": [0,7]
+    },
+    "countDayInHoliday":false,
+    "reduceFileSize":false
+}

@@ -1,0 +1,69 @@
+{
+    "Term 2":{
+        "start":[2024,11,10],
+        "end":[2025,1,1],
+        "duration":70,
+        "timetable":[[8,0],[9,15],[10,30],[13,0],[14,15]],
+        "cycle":2,
+        "courses":{
+            "Calculus 12":{
+                "teacher":"Charles Zhang",
+                "index":[["even",1]],
+                "location":"A205"
+            },
+            "Physics 12":{
+                "teacher":"Charles Zhang",
+                "index":[["odd",1]],
+                "location":"A205"
+            },
+            "English Studies 12":{
+                "teacher":"Lucy Liu",
+                "index":[["everyday",2]],
+                "location":"A311"
+            },
+            "Career-Life Connections":{
+                "teacher":"Amy Hughes",
+                "index":[[[1,6],3]],
+                "location":"A306"
+            },
+            "Chemistry 12":{
+                "teacher":"Hayden Raulin",
+                "index":[["odd",5]],
+                "location":"A214"
+            },
+            "Mandarin 12":{
+                "teacher":"吴圣哲",
+                "cycle":1,
+                "index":[[[2,4],3]],
+                "location":"A312/A212"
+            },
+            "CIS 12":{
+                "teacher":"Don Park",
+                "index":[[[3,8],3]],
+                "location":"A206"
+            },
+            "AP Statistics 12":{
+                "teacher":"Ryan Gruver",
+                "index":[["even",4]],
+                "location":"A310"
+            },
+            "Active Living 12":{
+                "teacher":"Antonio Timor",
+                "index":[["even",5]],
+                "location":"A204"
+            },
+            "Support 12":{
+                "teacher": "Evan Lemay",
+                "index":[["odd",4],[[5,10],3]],
+                "location":"A308/Library"
+            }
+        },
+        "holidays":{
+            "National Holiday":{
+                "type": "fixed",
+                "date":[[2024,10,1],[2024,10,7]],
+                "compensation":[[[2024,9,29],2]]
+            }
+        }
+    }
+}
